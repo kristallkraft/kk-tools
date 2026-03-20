@@ -8,30 +8,30 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     :root {
-      --bg: #0d1117; --surface: #161b22; --surface2: #1c2330;
-      --border: #30363d; --accent: #58a6ff; --accent2: #3fb950;
-      --warn: #d29922; --danger: #f85149; --text: #e6edf3; --muted: #8b949e;
+      --bg: #f0f2f5; --surface: #ffffff; --surface2: #f4f6f9;
+      --border: #dde1e8; --accent: #006fc8; --accent2: #5b7539;
+      --warn: #c99e67; --danger: #dc2626; --text: #1a1e2e; --muted: #6b7280;
+      --gold: #c99e67; --green: #5b7539;
       --mono: 'IBM Plex Mono', monospace; --sans: 'IBM Plex Sans', sans-serif;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 40px 16px; }
 
-    .logo-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; }
-    .logo-icon { width: 44px; height: 44px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
-    .logo-text { font-size: 1.3rem; font-weight: 700; }
-    .logo-sub { font-size: 0.8rem; color: var(--muted); }
+    .logo-wrap { display: flex; align-items: center; margin-bottom: 32px; }
+    .logo-wrap img { height: 56px; width: auto; }
 
     .card {
       background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
       padding: 32px; width: 100%; max-width: 720px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
     }
     .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
     .card-sub { font-size: 0.85rem; color: var(--muted); margin-bottom: 28px; }
 
     .section-label {
       font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
-      color: var(--accent); margin-bottom: 14px; margin-top: 24px; padding-bottom: 6px;
-      border-bottom: 1px solid var(--border);
+      color: var(--gold); margin-bottom: 14px; margin-top: 24px; padding-bottom: 6px;
+      border-bottom: 2px solid var(--gold);
     }
     .section-label:first-of-type { margin-top: 0; }
 
@@ -46,13 +46,13 @@
       border-radius: 7px; padding: 10px 12px; color: var(--text);
       font-family: var(--sans); font-size: 0.9rem; transition: border-color 0.15s;
     }
-    input:focus, select:focus { outline: none; border-color: var(--accent); }
+    input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,111,200,0.12); }
     input.error, select.error { border-color: var(--danger); }
-    select option { background: var(--surface2); }
+    select option { background: var(--surface); }
 
     .sig-wrap {
       position: relative; border: 1px solid var(--border); border-radius: 7px;
-      background: var(--surface2); overflow: hidden;
+      background: #ffffff; overflow: hidden;
     }
     .sig-label-inside {
       position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
@@ -66,10 +66,10 @@
       color: var(--muted); font-size: 0.78rem; padding: 4px 12px; cursor: pointer;
       font-family: var(--sans);
     }
-    .btn-clear:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-clear:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,111,200,0.05); }
 
     .mandate-info {
-      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+      background: #fdf8f2; border: 1px solid #e8d9c0; border-radius: 8px;
       padding: 14px 16px; font-size: 0.78rem; color: var(--muted); line-height: 1.6;
       margin-top: 20px;
     }
@@ -77,10 +77,11 @@
 
     .btn-submit {
       width: 100%; margin-top: 24px; padding: 14px;
-      background: var(--accent); color: #0d1117; border: none; border-radius: 8px;
+      background: var(--accent); color: #ffffff; border: none; border-radius: 8px;
       font-family: var(--sans); font-size: 1rem; font-weight: 700; cursor: pointer;
-      transition: opacity 0.15s;
+      transition: opacity 0.15s, box-shadow 0.15s;
     }
+    .btn-submit:hover { box-shadow: 0 4px 14px rgba(0,111,200,0.35); }
     .btn-submit:hover { opacity: 0.88; }
     .btn-submit:disabled { opacity: 0.45; cursor: not-allowed; }
 
@@ -88,8 +89,8 @@
       margin-top: 16px; padding: 12px 16px; border-radius: 8px;
       font-size: 0.88rem; display: none;
     }
-    .status-msg.success { background: #1a3a2a; border: 1px solid var(--accent2); color: var(--accent2); display: block; }
-    .status-msg.error   { background: #3a1a1a; border: 1px solid var(--danger);  color: var(--danger);  display: block; }
+    .status-msg.success { background: #edf4e6; border: 1px solid var(--green); color: var(--green); display: block; }
+    .status-msg.error   { background: #fef2f2; border: 1px solid var(--danger); color: var(--danger); display: block; }
 
     @media (max-width: 560px) {
       .row.col2, .row.col3 { grid-template-columns: 1fr; }
@@ -100,11 +101,7 @@
 <body>
 
 <div class="logo-wrap">
-  <div class="logo-icon">💎</div>
-  <div>
-    <div class="logo-text">Kristallkraft</div>
-    <div class="logo-sub">kristallkraft.com</div>
-  </div>
+  <img src="https://kristallkraft-pferdefutter.de/cdn/shop/files/kristallkraft-logo_280x.svg" alt="Kristallkraft">
 </div>
 
 <div class="card">
@@ -245,7 +242,7 @@ let drawing = false, hasSig = false;
 let sigPaths = [];      // all completed strokes [[{x,y},...], ...]
 let currentStroke = []; // stroke in progress
 
-const PEN_BLUE_UI  = '#6ea8fe'; // visible on dark bg
+const PEN_BLUE_UI  = '#006fc8'; // CTA blue, visible on white bg
 const PEN_BLUE_PDF = '#1a3580'; // deep ballpoint blue for PDF
 
 function applyCtxStyle(context, color) {
@@ -366,16 +363,19 @@ function buildPDF(data, sigDataUrl) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const W = 210, ml = 20, mr = 190, cw = mr - ml;
 
-  // Header bar
-  doc.setFillColor(22, 27, 34);
+  // Header bar (KK Green)
+  doc.setFillColor(91, 117, 57);
   doc.rect(0, 0, W, 28, 'F');
+  // Gold accent stripe
+  doc.setFillColor(201, 158, 103);
+  doc.rect(0, 26, W, 2, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
   doc.text('SEPA-Lastschriftmandat', ml, 12);
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(139, 148, 158);
+  doc.setTextColor(220, 235, 200);
   doc.text('Kristallkraft GmbH & Co. KG  •  kristallkraft.com', ml, 20);
   doc.text('Datum: ' + new Date().toLocaleDateString('de-DE'), mr, 20, { align: 'right' });
 
@@ -383,11 +383,14 @@ function buildPDF(data, sigDataUrl) {
   doc.setTextColor(30, 30, 30);
 
   function sectionTitle(txt) {
-    doc.setFillColor(240, 242, 245);
+    doc.setFillColor(253, 248, 242);
     doc.rect(ml, y - 4, cw, 7, 'F');
+    doc.setDrawColor(201, 158, 103);
+    doc.setLineWidth(0.5);
+    doc.line(ml, y + 3, mr, y + 3);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
-    doc.setTextColor(88, 166, 255);
+    doc.setTextColor(201, 158, 103);
     doc.text(txt.toUpperCase(), ml + 2, y + 0.5);
     doc.setTextColor(30, 30, 30);
     y += 8;
@@ -468,10 +471,10 @@ function buildPDF(data, sigDataUrl) {
   doc.setTextColor(100, 100, 100);
   doc.text(data.city + ', ' + new Date().toLocaleDateString('de-DE') + '   –   ' + data.firstName + ' ' + data.lastName + ' (' + data.companyName + ')', ml, y);
 
-  // Footer
-  doc.setFillColor(22, 27, 34);
+  // Footer (KK Green)
+  doc.setFillColor(91, 117, 57);
   doc.rect(0, 282, W, 15, 'F');
-  doc.setTextColor(139, 148, 158);
+  doc.setTextColor(220, 235, 200);
   doc.setFontSize(7.5);
   doc.text('Kristallkraft GmbH & Co. KG  •  kristallkraft.com', W / 2, 290, { align: 'center' });
 
