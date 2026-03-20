@@ -116,7 +116,7 @@
     <!-- GLÄUBIGER-INFO -->
     <div class="section-label">Gläubiger</div>
     <div class="mandate-info">
-      <strong>Gläubiger:</strong> Kristallkraft GmbH &nbsp;|&nbsp;
+      <strong>Gläubiger:</strong> Kristallkraft GmbH &amp; Co. KG &nbsp;|&nbsp;
       <strong>Gläubiger-ID:</strong> DE00ZZZ00000000000 &nbsp;|&nbsp;
       <strong>Mandatsreferenz:</strong> <span id="mandateRef">wird generiert…</span>
     </div>
@@ -219,8 +219,8 @@
     </div>
 
     <div class="mandate-info" style="margin-top:16px;">
-      Ich ermächtige die <strong>Kristallkraft GmbH</strong>, Zahlungen von meinem Konto mittels Lastschrift einzuziehen.
-      Zugleich weise ich mein Kreditinstitut an, die von der Kristallkraft GmbH auf mein Konto gezogenen
+      Ich ermächtige die <strong>Kristallkraft GmbH &amp; Co. KG</strong>, Zahlungen von meinem Konto mittels Lastschrift einzuziehen.
+      Zugleich weise ich mein Kreditinstitut an, die von der Kristallkraft GmbH &amp; Co. KG auf mein Konto gezogenen
       Lastschriften einzulösen. <strong>Hinweis:</strong> Ich kann innerhalb von acht Wochen, beginnend mit
       dem Belastungsdatum, die Erstattung des belasteten Betrages verlangen. Es gelten dabei die mit meinem
       Kreditinstitut vereinbarten Bedingungen. Bei B2B-Mandaten ist keine Erstattung möglich.
@@ -314,7 +314,7 @@ function buildPDF(data, sigDataUrl) {
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(139, 148, 158);
-  doc.text('Kristallkraft GmbH  •  kristallkraft.com', ml, 20);
+  doc.text('Kristallkraft GmbH & Co. KG  •  kristallkraft.com', ml, 20);
   doc.text('Datum: ' + new Date().toLocaleDateString('de-DE'), mr, 20, { align: 'right' });
 
   let y = 36;
@@ -359,7 +359,7 @@ function buildPDF(data, sigDataUrl) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(80, 80, 80);
-  doc.text('Gläubiger: Kristallkraft GmbH', ml + 3, y + 4.5);
+  doc.text('Gläubiger: Kristallkraft GmbH & Co. KG', ml + 3, y + 4.5);
   doc.text('Gläubiger-ID: DE00ZZZ00000000000', ml + 3, y + 9);
   doc.text('Mandatsreferenz: ' + mandateRef, ml + cw / 2, y + 4.5);
   doc.text('Mandatstyp: SEPA-Basislastschrift (B2B)', ml + cw / 2, y + 9);
@@ -387,7 +387,7 @@ function buildPDF(data, sigDataUrl) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.2);
   doc.setTextColor(60, 60, 60);
-  const legal = 'Ich ermächtige die Kristallkraft GmbH, Zahlungen von meinem Konto mittels Lastschrift einzuziehen. Zugleich weise ich mein Kreditinstitut an, die von der Kristallkraft GmbH auf mein Konto gezogenen Lastschriften einzulösen. Hinweis: Ich kann innerhalb von acht Wochen, beginnend mit dem Belastungsdatum, die Erstattung des belasteten Betrages verlangen. Es gelten dabei die mit meinem Kreditinstitut vereinbarten Bedingungen.';
+  const legal = 'Ich ermächtige die Kristallkraft GmbH & Co. KG, Zahlungen von meinem Konto mittels Lastschrift einzuziehen. Zugleich weise ich mein Kreditinstitut an, die von der Kristallkraft GmbH & Co. KG auf mein Konto gezogenen Lastschriften einzulösen. Hinweis: Ich kann innerhalb von acht Wochen, beginnend mit dem Belastungsdatum, die Erstattung des belasteten Betrages verlangen. Es gelten dabei die mit meinem Kreditinstitut vereinbarten Bedingungen.';
   const lines = doc.splitTextToSize(legal, cw);
   doc.text(lines, ml, y);
   y += lines.length * 4.5 + 6;
@@ -411,7 +411,7 @@ function buildPDF(data, sigDataUrl) {
   doc.rect(0, 282, W, 15, 'F');
   doc.setTextColor(139, 148, 158);
   doc.setFontSize(7.5);
-  doc.text('Kristallkraft GmbH  •  kristallkraft.com', W / 2, 290, { align: 'center' });
+  doc.text('Kristallkraft GmbH & Co. KG  •  kristallkraft.com', W / 2, 290, { align: 'center' });
 
   return doc;
 }
