@@ -17,10 +17,8 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 40px 16px; }
 
-    .logo-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; }
-    .logo-icon { width: 44px; height: 44px; background: var(--gold); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
-    .logo-text { font-size: 1.3rem; font-weight: 700; }
-    .logo-sub { font-size: 0.8rem; color: var(--muted); }
+    .logo-wrap { display: flex; align-items: center; margin-bottom: 32px; }
+    .logo-wrap img { height: 56px; width: auto; }
 
     .card {
       background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
@@ -103,11 +101,7 @@
 <body>
 
 <div class="logo-wrap">
-  <div class="logo-icon">💎</div>
-  <div>
-    <div class="logo-text">Kristallkraft</div>
-    <div class="logo-sub">kristallkraft.com</div>
-  </div>
+  <img src="https://kristallkraft-pferdefutter.de/cdn/shop/files/kristallkraft-logo_280x.svg" alt="Kristallkraft">
 </div>
 
 <div class="card">
