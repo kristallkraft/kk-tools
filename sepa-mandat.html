@@ -116,7 +116,7 @@
     <!-- GLÄUBIGER-INFO -->
     <div class="section-label">Gläubiger</div>
     <div class="mandate-info">
-      <strong>Gläubiger:</strong> Kristallkraft GmbH &nbsp;|&nbsp;
+      <strong>Gläubiger:</strong> Kristallkraft GmbH &amp; Co. KG &nbsp;|&nbsp;
       <strong>Gläubiger-ID:</strong> DE00ZZZ00000000000 &nbsp;|&nbsp;
       <strong>Mandatsreferenz:</strong> <span id="mandateRef">wird generiert…</span>
     </div>
@@ -219,8 +219,8 @@
     </div>
 
     <div class="mandate-info" style="margin-top:16px;">
-      Ich ermächtige die <strong>Kristallkraft GmbH</strong>, Zahlungen von meinem Konto mittels Lastschrift einzuziehen.
-      Zugleich weise ich mein Kreditinstitut an, die von der Kristallkraft GmbH auf mein Konto gezogenen
+      Ich ermächtige die <strong>Kristallkraft GmbH &amp; Co. KG</strong>, Zahlungen von meinem Konto mittels Lastschrift einzuziehen.
+      Zugleich weise ich mein Kreditinstitut an, die von der Kristallkraft GmbH &amp; Co. KG auf mein Konto gezogenen
       Lastschriften einzulösen. <strong>Hinweis:</strong> Ich kann innerhalb von acht Wochen, beginnend mit
       dem Belastungsdatum, die Erstattung des belasteten Betrages verlangen. Es gelten dabei die mit meinem
       Kreditinstitut vereinbarten Bedingungen. Bei B2B-Mandaten ist keine Erstattung möglich.
@@ -242,41 +242,103 @@ document.getElementById('mandateRef').textContent = mandateRef;
 const canvas = document.getElementById('sigCanvas');
 const ctx = canvas.getContext('2d');
 let drawing = false, hasSig = false;
+let sigPaths = [];      // all completed strokes [[{x,y},...], ...]
+let currentStroke = []; // stroke in progress
+
+const PEN_BLUE_UI  = '#6ea8fe'; // visible on dark bg
+const PEN_BLUE_PDF = '#1a3580'; // deep ballpoint blue for PDF
+
+function applyCtxStyle(context, color) {
+  context.strokeStyle = color;
+  context.lineWidth   = 2.2;
+  context.lineCap     = 'round';
+  context.lineJoin    = 'round';
+}
 
 function resizeCanvas() {
   const rect = canvas.parentElement.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width  = rect.width  * dpr;
+  const dpr  = window.devicePixelRatio || 1;
+  canvas.width  = rect.width * dpr;
   canvas.height = 160 * dpr;
   ctx.scale(dpr, dpr);
-  ctx.strokeStyle = '#e6edf3';
-  ctx.lineWidth = 2.2;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
+  applyCtxStyle(ctx, PEN_BLUE_UI);
+  redrawUI();
 }
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
+function redrawUI() {
+  const dpr = window.devicePixelRatio || 1;
+  ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+  applyCtxStyle(ctx, PEN_BLUE_UI);
+  for (const stroke of sigPaths) drawStroke(ctx, stroke);
+}
+
+function drawStroke(context, pts) {
+  if (pts.length < 2) return;
+  context.beginPath();
+  context.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) context.lineTo(pts[i].x, pts[i].y);
+  context.stroke();
+}
+
 function getPos(e) {
-  const r = canvas.getBoundingClientRect();
+  const r   = canvas.getBoundingClientRect();
   const src = e.touches ? e.touches[0] : e;
   return { x: src.clientX - r.left, y: src.clientY - r.top };
 }
 
-canvas.addEventListener('mousedown',  e => { drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
-canvas.addEventListener('mousemove',  e => { if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); hasSig = true; document.getElementById('sigHint').style.opacity = '0'; });
-canvas.addEventListener('mouseup',    () => { drawing = false; });
-canvas.addEventListener('mouseleave', () => { drawing = false; });
-canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }, { passive: false });
-canvas.addEventListener('touchmove',  e => { e.preventDefault(); if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); hasSig = true; document.getElementById('sigHint').style.opacity = '0'; }, { passive: false });
-canvas.addEventListener('touchend',   () => { drawing = false; });
+function onStart(e) {
+  drawing = true;
+  currentStroke = [getPos(e)];
+  ctx.beginPath();
+  ctx.moveTo(currentStroke[0].x, currentStroke[0].y);
+}
+function onMove(e) {
+  if (!drawing) return;
+  const p = getPos(e);
+  currentStroke.push(p);
+  ctx.lineTo(p.x, p.y);
+  ctx.stroke();
+  hasSig = true;
+  document.getElementById('sigHint').style.opacity = '0';
+}
+function onEnd() {
+  if (drawing && currentStroke.length > 1) sigPaths.push(currentStroke);
+  currentStroke = [];
+  drawing = false;
+}
+
+canvas.addEventListener('mousedown',  e => { onStart(e); });
+canvas.addEventListener('mousemove',  e => { onMove(e); });
+canvas.addEventListener('mouseup',    onEnd);
+canvas.addEventListener('mouseleave', onEnd);
+canvas.addEventListener('touchstart', e => { e.preventDefault(); onStart(e); }, { passive: false });
+canvas.addEventListener('touchmove',  e => { e.preventDefault(); onMove(e); },  { passive: false });
+canvas.addEventListener('touchend',   onEnd);
 
 document.getElementById('clearSig').addEventListener('click', () => {
-  const dpr = window.devicePixelRatio || 1;
-  ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
-  hasSig = false;
+  sigPaths = []; currentStroke = []; hasSig = false;
+  redrawUI();
   document.getElementById('sigHint').style.opacity = '1';
 });
+
+// Render signature on white background with deep blue ink for PDF
+function getSigDataUrlForPDF() {
+  const logW = canvas.getBoundingClientRect().width;
+  const logH = 160;
+  const scale = 2; // 2× for crisp PDF rendering
+  const off = document.createElement('canvas');
+  off.width  = logW * scale;
+  off.height = logH * scale;
+  const oc = off.getContext('2d');
+  oc.fillStyle = '#ffffff';
+  oc.fillRect(0, 0, off.width, off.height);
+  oc.scale(scale, scale);
+  applyCtxStyle(oc, PEN_BLUE_PDF);
+  for (const stroke of sigPaths) drawStroke(oc, stroke);
+  return off.toDataURL('image/png');
+}
 
 // ─── IBAN Formatter ───────────────────────────────────────────────────────────
 document.getElementById('iban').addEventListener('input', function() {
@@ -314,7 +376,7 @@ function buildPDF(data, sigDataUrl) {
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(139, 148, 158);
-  doc.text('Kristallkraft GmbH  •  kristallkraft.com', ml, 20);
+  doc.text('Kristallkraft GmbH & Co. KG  •  kristallkraft.com', ml, 20);
   doc.text('Datum: ' + new Date().toLocaleDateString('de-DE'), mr, 20, { align: 'right' });
 
   let y = 36;
@@ -359,7 +421,7 @@ function buildPDF(data, sigDataUrl) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(80, 80, 80);
-  doc.text('Gläubiger: Kristallkraft GmbH', ml + 3, y + 4.5);
+  doc.text('Gläubiger: Kristallkraft GmbH & Co. KG', ml + 3, y + 4.5);
   doc.text('Gläubiger-ID: DE00ZZZ00000000000', ml + 3, y + 9);
   doc.text('Mandatsreferenz: ' + mandateRef, ml + cw / 2, y + 4.5);
   doc.text('Mandatstyp: SEPA-Basislastschrift (B2B)', ml + cw / 2, y + 9);
@@ -387,7 +449,7 @@ function buildPDF(data, sigDataUrl) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.2);
   doc.setTextColor(60, 60, 60);
-  const legal = 'Ich ermächtige die Kristallkraft GmbH, Zahlungen von meinem Konto mittels Lastschrift einzuziehen. Zugleich weise ich mein Kreditinstitut an, die von der Kristallkraft GmbH auf mein Konto gezogenen Lastschriften einzulösen. Hinweis: Ich kann innerhalb von acht Wochen, beginnend mit dem Belastungsdatum, die Erstattung des belasteten Betrages verlangen. Es gelten dabei die mit meinem Kreditinstitut vereinbarten Bedingungen.';
+  const legal = 'Ich ermächtige die Kristallkraft GmbH & Co. KG, Zahlungen von meinem Konto mittels Lastschrift einzuziehen. Zugleich weise ich mein Kreditinstitut an, die von der Kristallkraft GmbH & Co. KG auf mein Konto gezogenen Lastschriften einzulösen. Hinweis: Ich kann innerhalb von acht Wochen, beginnend mit dem Belastungsdatum, die Erstattung des belasteten Betrages verlangen. Es gelten dabei die mit meinem Kreditinstitut vereinbarten Bedingungen.';
   const lines = doc.splitTextToSize(legal, cw);
   doc.text(lines, ml, y);
   y += lines.length * 4.5 + 6;
@@ -411,7 +473,7 @@ function buildPDF(data, sigDataUrl) {
   doc.rect(0, 282, W, 15, 'F');
   doc.setTextColor(139, 148, 158);
   doc.setFontSize(7.5);
-  doc.text('Kristallkraft GmbH  •  kristallkraft.com', W / 2, 290, { align: 'center' });
+  doc.text('Kristallkraft GmbH & Co. KG  •  kristallkraft.com', W / 2, 290, { align: 'center' });
 
   return doc;
 }
@@ -499,8 +561,8 @@ document.getElementById('mandateForm').addEventListener('submit', async function
   btn.textContent = 'Wird verarbeitet…';
 
   try {
-    // Get signature as PNG dataURL
-    const sigDataUrl = canvas.toDataURL('image/png');
+    // Get signature as PNG dataURL (white bg, blue ink)
+    const sigDataUrl = getSigDataUrlForPDF();
 
     // Build PDF
     const doc = buildPDF(data, sigDataUrl);
