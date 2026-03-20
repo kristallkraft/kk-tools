@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SEPA-Lastschriftmandat – Kristallkraft</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d1117; --surface: #161b22; --surface2: #1c2330;
+      --border: #30363d; --accent: #58a6ff; --accent2: #3fb950;
+      --warn: #d29922; --danger: #f85149; --text: #e6edf3; --muted: #8b949e;
+      --mono: 'IBM Plex Mono', monospace; --sans: 'IBM Plex Sans', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 40px 16px; }
+
+    .logo-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; }
+    .logo-icon { width: 44px; height: 44px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+    .logo-text { font-size: 1.3rem; font-weight: 700; }
+    .logo-sub { font-size: 0.8rem; color: var(--muted); }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 32px; width: 100%; max-width: 720px;
+    }
+    .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+    .card-sub { font-size: 0.85rem; color: var(--muted); margin-bottom: 28px; }
+
+    .section-label {
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--accent); margin-bottom: 14px; margin-top: 24px; padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-label:first-of-type { margin-top: 0; }
+
+    .row { display: grid; gap: 14px; margin-bottom: 14px; }
+    .row.col2 { grid-template-columns: 1fr 1fr; }
+    .row.col3 { grid-template-columns: 1fr 1fr 1fr; }
+    .row.col13 { grid-template-columns: 1fr 3fr; }
+
+    label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 5px; font-weight: 600; }
+    input, select {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 7px; padding: 10px 12px; color: var(--text);
+      font-family: var(--sans); font-size: 0.9rem; transition: border-color 0.15s;
+    }
+    input:focus, select:focus { outline: none; border-color: var(--accent); }
+    input.error, select.error { border-color: var(--danger); }
+    select option { background: var(--surface2); }
+
+    .sig-wrap {
+      position: relative; border: 1px solid var(--border); border-radius: 7px;
+      background: var(--surface2); overflow: hidden;
+    }
+    .sig-label-inside {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      color: var(--muted); font-size: 0.82rem; pointer-events: none; user-select: none;
+      transition: opacity 0.2s;
+    }
+    canvas#sigCanvas { display: block; width: 100%; height: 160px; cursor: crosshair; touch-action: none; }
+    .sig-actions { display: flex; justify-content: flex-end; padding: 6px 8px; border-top: 1px solid var(--border); }
+    .btn-clear {
+      background: none; border: 1px solid var(--border); border-radius: 5px;
+      color: var(--muted); font-size: 0.78rem; padding: 4px 12px; cursor: pointer;
+      font-family: var(--sans);
+    }
+    .btn-clear:hover { border-color: var(--accent); color: var(--accent); }
+
+    .mandate-info {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+      padding: 14px 16px; font-size: 0.78rem; color: var(--muted); line-height: 1.6;
+      margin-top: 20px;
+    }
+    .mandate-info strong { color: var(--text); }
+
+    .btn-submit {
+      width: 100%; margin-top: 24px; padding: 14px;
+      background: var(--accent); color: #0d1117; border: none; border-radius: 8px;
+      font-family: var(--sans); font-size: 1rem; font-weight: 700; cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-submit:hover { opacity: 0.88; }
+    .btn-submit:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .status-msg {
+      margin-top: 16px; padding: 12px 16px; border-radius: 8px;
+      font-size: 0.88rem; display: none;
+    }
+    .status-msg.success { background: #1a3a2a; border: 1px solid var(--accent2); color: var(--accent2); display: block; }
+    .status-msg.error   { background: #3a1a1a; border: 1px solid var(--danger);  color: var(--danger);  display: block; }
+
+    @media (max-width: 560px) {
+      .row.col2, .row.col3 { grid-template-columns: 1fr; }
+      .row.col13 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="logo-wrap">
+  <div class="logo-icon">💎</div>
+  <div>
+    <div class="logo-text">Kristallkraft</div>
+    <div class="logo-sub">kristallkraft.com</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">SEPA-Lastschriftmandat</div>
+  <div class="card-sub">Erteilung eines SEPA-Basis-Lastschriftmandats (B2B) – bitte alle Felder vollständig ausfüllen.</div>
+
+  <form id="mandateForm" novalidate>
+
+    <!-- GLÄUBIGER-INFO -->
+    <div class="section-label">Gläubiger</div>
+    <div class="mandate-info">
+      <strong>Gläubiger:</strong> Kristallkraft GmbH &nbsp;|&nbsp;
+      <strong>Gläubiger-ID:</strong> DE00ZZZ00000000000 &nbsp;|&nbsp;
+      <strong>Mandatsreferenz:</strong> <span id="mandateRef">wird generiert…</span>
+    </div>
+
+    <!-- UNTERNEHMEN -->
+    <div class="section-label">Unternehmen / Kontoinhaber</div>
+    <div class="row">
+      <div>
+        <label for="companyName">Firmenname *</label>
+        <input type="text" id="companyName" placeholder="Muster GmbH" required>
+      </div>
+    </div>
+    <div class="row col2">
+      <div>
+        <label for="firstName">Vorname (Ansprechpartner) *</label>
+        <input type="text" id="firstName" placeholder="Max" required>
+      </div>
+      <div>
+        <label for="lastName">Nachname *</label>
+        <input type="text" id="lastName" placeholder="Mustermann" required>
+      </div>
+    </div>
+    <div class="row col2">
+      <div>
+        <label for="email">E-Mail *</label>
+        <input type="email" id="email" placeholder="max@firma.de" required>
+      </div>
+      <div>
+        <label for="phone">Telefon</label>
+        <input type="tel" id="phone" placeholder="+49 123 456789">
+      </div>
+    </div>
+
+    <!-- ADRESSE -->
+    <div class="section-label">Rechnungsadresse</div>
+    <div class="row">
+      <div>
+        <label for="street">Straße und Hausnummer *</label>
+        <input type="text" id="street" placeholder="Musterstraße 1" required>
+      </div>
+    </div>
+    <div class="row col13">
+      <div>
+        <label for="zip">PLZ *</label>
+        <input type="text" id="zip" placeholder="12345" required>
+      </div>
+      <div>
+        <label for="city">Ort *</label>
+        <input type="text" id="city" placeholder="Musterstadt" required>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label for="country">Land *</label>
+        <select id="country" required>
+          <option value="DE">Deutschland</option>
+          <option value="AT">Österreich</option>
+          <option value="CH">Schweiz</option>
+          <option value="LU">Luxemburg</option>
+          <option value="NL">Niederlande</option>
+          <option value="BE">Belgien</option>
+          <option value="FR">Frankreich</option>
+          <option value="IT">Italien</option>
+          <option value="ES">Spanien</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- BANKDATEN -->
+    <div class="section-label">Bankverbindung</div>
+    <div class="row">
+      <div>
+        <label for="iban">IBAN *</label>
+        <input type="text" id="iban" placeholder="DE00 1234 5678 9012 3456 78" required
+               style="font-family: var(--mono); letter-spacing: 0.04em;">
+      </div>
+    </div>
+    <div class="row col2">
+      <div>
+        <label for="bic">BIC / SWIFT *</label>
+        <input type="text" id="bic" placeholder="DEUTDEDB" required style="font-family: var(--mono);">
+      </div>
+      <div>
+        <label for="bankName">Kreditinstitut *</label>
+        <input type="text" id="bankName" placeholder="Deutsche Bank" required>
+      </div>
+    </div>
+
+    <!-- UNTERSCHRIFT -->
+    <div class="section-label">Unterschrift</div>
+    <p style="font-size:0.8rem; color:var(--muted); margin-bottom:10px;">
+      Bitte unterschreiben Sie mit Maus oder Finger im Feld unten.
+    </p>
+    <div class="sig-wrap">
+      <canvas id="sigCanvas"></canvas>
+      <div class="sig-label-inside" id="sigHint">Hier unterschreiben</div>
+      <div class="sig-actions">
+        <button type="button" class="btn-clear" id="clearSig">Löschen</button>
+      </div>
+    </div>
+
+    <div class="mandate-info" style="margin-top:16px;">
+      Ich ermächtige die <strong>Kristallkraft GmbH</strong>, Zahlungen von meinem Konto mittels Lastschrift einzuziehen.
+      Zugleich weise ich mein Kreditinstitut an, die von der Kristallkraft GmbH auf mein Konto gezogenen
+      Lastschriften einzulösen. <strong>Hinweis:</strong> Ich kann innerhalb von acht Wochen, beginnend mit
+      dem Belastungsdatum, die Erstattung des belasteten Betrages verlangen. Es gelten dabei die mit meinem
+      Kreditinstitut vereinbarten Bedingungen. Bei B2B-Mandaten ist keine Erstattung möglich.
+    </div>
+
+    <button type="submit" class="btn-submit" id="submitBtn">
+      Mandat erteilen &amp; PDF herunterladen
+    </button>
+    <div class="status-msg" id="statusMsg"></div>
+  </form>
+</div>
+
+<script>
+// ─── Mandate Reference ───────────────────────────────────────────────────────
+const mandateRef = 'KK-' + Date.now().toString(36).toUpperCase();
+document.getElementById('mandateRef').textContent = mandateRef;
+
+// ─── Signature Canvas ─────────────────────────────────────────────────────────
+const canvas = document.getElementById('sigCanvas');
+const ctx = canvas.getContext('2d');
+let drawing = false, hasSig = false;
+
+function resizeCanvas() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = rect.width  * dpr;
+  canvas.height = 160 * dpr;
+  ctx.scale(dpr, dpr);
+  ctx.strokeStyle = '#e6edf3';
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function getPos(e) {
+  const r = canvas.getBoundingClientRect();
+  const src = e.touches ? e.touches[0] : e;
+  return { x: src.clientX - r.left, y: src.clientY - r.top };
+}
+
+canvas.addEventListener('mousedown',  e => { drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+canvas.addEventListener('mousemove',  e => { if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); hasSig = true; document.getElementById('sigHint').style.opacity = '0'; });
+canvas.addEventListener('mouseup',    () => { drawing = false; });
+canvas.addEventListener('mouseleave', () => { drawing = false; });
+canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }, { passive: false });
+canvas.addEventListener('touchmove',  e => { e.preventDefault(); if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); hasSig = true; document.getElementById('sigHint').style.opacity = '0'; }, { passive: false });
+canvas.addEventListener('touchend',   () => { drawing = false; });
+
+document.getElementById('clearSig').addEventListener('click', () => {
+  const dpr = window.devicePixelRatio || 1;
+  ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+  hasSig = false;
+  document.getElementById('sigHint').style.opacity = '1';
+});
+
+// ─── IBAN Formatter ───────────────────────────────────────────────────────────
+document.getElementById('iban').addEventListener('input', function() {
+  let v = this.value.replace(/\s+/g, '').toUpperCase();
+  this.value = v.replace(/(.{4})/g, '$1 ').trim();
+});
+
+// ─── Validation ───────────────────────────────────────────────────────────────
+function validate() {
+  const ids = ['companyName','firstName','lastName','email','street','zip','city','iban','bic','bankName'];
+  let ok = true;
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    const val = el.value.trim();
+    if (!val) { el.classList.add('error'); ok = false; }
+    else       { el.classList.remove('error'); }
+  });
+  if (!hasSig) ok = false;
+  return ok;
+}
+
+// ─── PDF Generation ───────────────────────────────────────────────────────────
+function buildPDF(data, sigDataUrl) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const W = 210, ml = 20, mr = 190, cw = mr - ml;
+
+  // Header bar
+  doc.setFillColor(22, 27, 34);
+  doc.rect(0, 0, W, 28, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.text('SEPA-Lastschriftmandat', ml, 12);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(139, 148, 158);
+  doc.text('Kristallkraft GmbH  •  kristallkraft.com', ml, 20);
+  doc.text('Datum: ' + new Date().toLocaleDateString('de-DE'), mr, 20, { align: 'right' });
+
+  let y = 36;
+  doc.setTextColor(30, 30, 30);
+
+  function sectionTitle(txt) {
+    doc.setFillColor(240, 242, 245);
+    doc.rect(ml, y - 4, cw, 7, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(88, 166, 255);
+    doc.text(txt.toUpperCase(), ml + 2, y + 0.5);
+    doc.setTextColor(30, 30, 30);
+    y += 8;
+  }
+
+  function field(label, value, x, colW) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(100, 100, 100);
+    doc.text(label, x, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(20, 20, 20);
+    doc.text(value || '—', x, y + 5);
+  }
+
+  function row2(l1, v1, l2, v2) {
+    field(l1, v1, ml, cw / 2);
+    field(l2, v2, ml + cw / 2, cw / 2);
+    y += 14;
+  }
+  function row1(l1, v1) {
+    field(l1, v1, ml, cw);
+    y += 14;
+  }
+
+  // Gläubiger info box
+  doc.setDrawColor(48, 54, 61);
+  doc.setLineWidth(0.3);
+  doc.rect(ml, y, cw, 12);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(80, 80, 80);
+  doc.text('Gläubiger: Kristallkraft GmbH', ml + 3, y + 4.5);
+  doc.text('Gläubiger-ID: DE00ZZZ00000000000', ml + 3, y + 9);
+  doc.text('Mandatsreferenz: ' + mandateRef, ml + cw / 2, y + 4.5);
+  doc.text('Mandatstyp: SEPA-Basislastschrift (B2B)', ml + cw / 2, y + 9);
+  y += 17;
+
+  sectionTitle('Kontoinhaber / Unternehmen');
+  row1('Firmenname', data.companyName);
+  row2('Vorname', data.firstName, 'Nachname', data.lastName);
+  row2('E-Mail', data.email, 'Telefon', data.phone || '—');
+  y += 2;
+
+  sectionTitle('Adresse');
+  row1('Straße und Hausnummer', data.street);
+  row2('PLZ', data.zip, 'Ort', data.city);
+  row1('Land', data.countryName);
+  y += 2;
+
+  sectionTitle('Bankverbindung');
+  row1('IBAN', data.iban);
+  row2('BIC / SWIFT', data.bic, 'Kreditinstitut', data.bankName);
+  y += 2;
+
+  // Legal text
+  sectionTitle('Mandat / Einzugsermächtigung');
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.2);
+  doc.setTextColor(60, 60, 60);
+  const legal = 'Ich ermächtige die Kristallkraft GmbH, Zahlungen von meinem Konto mittels Lastschrift einzuziehen. Zugleich weise ich mein Kreditinstitut an, die von der Kristallkraft GmbH auf mein Konto gezogenen Lastschriften einzulösen. Hinweis: Ich kann innerhalb von acht Wochen, beginnend mit dem Belastungsdatum, die Erstattung des belasteten Betrages verlangen. Es gelten dabei die mit meinem Kreditinstitut vereinbarten Bedingungen.';
+  const lines = doc.splitTextToSize(legal, cw);
+  doc.text(lines, ml, y);
+  y += lines.length * 4.5 + 6;
+
+  // Signature
+  sectionTitle('Unterschrift');
+  doc.setDrawColor(180, 180, 180);
+  doc.setLineWidth(0.2);
+  doc.rect(ml, y, cw, 32);
+  if (sigDataUrl) {
+    try { doc.addImage(sigDataUrl, 'PNG', ml + 1, y + 1, cw - 2, 30); } catch(e) {}
+  }
+  y += 35;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(100, 100, 100);
+  doc.text(data.city + ', ' + new Date().toLocaleDateString('de-DE') + '   –   ' + data.firstName + ' ' + data.lastName + ' (' + data.companyName + ')', ml, y);
+
+  // Footer
+  doc.setFillColor(22, 27, 34);
+  doc.rect(0, 282, W, 15, 'F');
+  doc.setTextColor(139, 148, 158);
+  doc.setFontSize(7.5);
+  doc.text('Kristallkraft GmbH  •  kristallkraft.com', W / 2, 290, { align: 'center' });
+
+  return doc;
+}
+
+// ─── Email via Web3Forms ──────────────────────────────────────────────────────
+async function sendEmail(data, pdfBase64) {
+  const body = `
+SEPA-Lastschriftmandat eingegangen
+===================================
+Mandatsreferenz : ${mandateRef}
+Datum           : ${new Date().toLocaleDateString('de-DE')}
+
+UNTERNEHMEN
+  Firma   : ${data.companyName}
+  Kontakt : ${data.firstName} ${data.lastName}
+  E-Mail  : ${data.email}
+  Telefon : ${data.phone || '—'}
+
+ADRESSE
+  Straße  : ${data.street}
+  PLZ/Ort : ${data.zip} ${data.city}
+  Land    : ${data.countryName}
+
+BANKVERBINDUNG
+  IBAN    : ${data.iban}
+  BIC     : ${data.bic}
+  Bank    : ${data.bankName}
+
+Das unterschriebene PDF-Mandat ist als Anhang beigefügt.
+  `.trim();
+
+  const payload = {
+    access_key: 'ffe01931-3b87-4ad2-bba9-57c027087f38',
+    subject: `SEPA-Mandat: ${data.companyName} (${mandateRef})`,
+    from_name: data.companyName,
+    email: data.email,
+    message: body,
+    attachment: pdfBase64,
+    attachment_name: `SEPA-Mandat_${mandateRef}.pdf`,
+  };
+
+  const res = await fetch('https://api.web3forms.com/submit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const json = await res.json();
+  if (!json.success) throw new Error(json.message || 'E-Mail-Versand fehlgeschlagen');
+}
+
+// ─── Form Submit ──────────────────────────────────────────────────────────────
+document.getElementById('mandateForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const statusMsg = document.getElementById('statusMsg');
+  statusMsg.className = 'status-msg';
+
+  if (!validate()) {
+    statusMsg.textContent = !hasSig
+      ? 'Bitte unterschreiben Sie das Mandat.'
+      : 'Bitte füllen Sie alle Pflichtfelder aus.';
+    statusMsg.className = 'status-msg error';
+    return;
+  }
+
+  const countryEl = document.getElementById('country');
+  const data = {
+    companyName : document.getElementById('companyName').value.trim(),
+    firstName   : document.getElementById('firstName').value.trim(),
+    lastName    : document.getElementById('lastName').value.trim(),
+    email       : document.getElementById('email').value.trim(),
+    phone       : document.getElementById('phone').value.trim(),
+    street      : document.getElementById('street').value.trim(),
+    zip         : document.getElementById('zip').value.trim(),
+    city        : document.getElementById('city').value.trim(),
+    country     : countryEl.value,
+    countryName : countryEl.options[countryEl.selectedIndex].text,
+    iban        : document.getElementById('iban').value.trim(),
+    bic         : document.getElementById('bic').value.trim(),
+    bankName    : document.getElementById('bankName').value.trim(),
+  };
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Wird verarbeitet…';
+
+  try {
+    // Get signature as PNG dataURL
+    const sigDataUrl = canvas.toDataURL('image/png');
+
+    // Build PDF
+    const doc = buildPDF(data, sigDataUrl);
+
+    // Download for customer
+    doc.save(`SEPA-Mandat_${mandateRef}.pdf`);
+
+    // Get base64 for email attachment (strip data URL prefix)
+    const pdfBase64 = doc.output('datauristring').split(',')[1];
+
+    // Send email
+    await sendEmail(data, pdfBase64);
+
+    statusMsg.textContent = 'Mandat erfolgreich erteilt! Das PDF wurde heruntergeladen und an Kristallkraft übermittelt.';
+    statusMsg.className = 'status-msg success';
+    btn.textContent = 'Mandat erteilt ✓';
+
+  } catch (err) {
+    console.error(err);
+    statusMsg.textContent = 'Fehler: ' + err.message;
+    statusMsg.className = 'status-msg error';
+    btn.disabled = false;
+    btn.textContent = 'Mandat erteilen & PDF herunterladen';
+  }
+});
+</script>
+</body>
+</html>
