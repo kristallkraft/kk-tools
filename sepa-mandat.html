@@ -337,6 +337,20 @@ function getSigDataUrlForPDF() {
   return off.toDataURL('image/png');
 }
 
+// ─── Logo preload for PDF ─────────────────────────────────────────────────────
+const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1014" height="386" viewBox="0 0 506.95 193.21"><path d="m7.78,125.65H0v-42h7.78v42Zm27.79-42l-18.5,19.59,20.97,22.41h-10.78l-17.12-19.62v-5.05l15.92-17.33h9.52-.01Z" fill="#c99e67"/><path d="m43.37,125.59v-41.94h19.09c8.58,0,12.87,3.75,12.87,11.25,0,5.07-3.34,9.27-10.02,12.6l13.31,18.15h-10.1l-12.78-18.3v-3.55c7.64-1.27,11.46-4.16,11.46-8.67,0-3.1-1.74-4.64-5.23-4.64h-10.66v35.1h-7.94Z" fill="#c99e67"/><rect x="84.54" y="83.65" width="7.78" height="42" fill="#c99e67"/><path d="m99.5,124.89v-7.05c4.21,1.57,10.97,1.35,16.28,1.35,6.44,0,9.66-2.15,9.66-6.46,0-3.13-1.98-4.7-5.93-4.7h-7.17c-8.6,0-12.89-3.92-12.89-11.75,0-8.62,6.12-12.92,18.36-12.92,4.7,0,11.36.05,11.36.05l-.04,6.7h-11.32c-7.05,0-10.57,2.06-10.57,6.17,0,3.13,1.7,4.7,5.11,4.7h7.17c9.14,0,13.72,3.91,13.72,11.75,0,8.81-5.82,13.22-17.45,13.22-5.31,0-12.07.32-16.28-1.05" fill="#c99e67"/><polygon points="168.64 83.65 168.64 90.4 156.6 90.4 156.6 125.65 148.81 125.65 148.81 90.4 136.77 90.4 136.77 83.65 168.64 83.65" fill="#c99e67"/><polygon points="165.48 125.65 183.31 83.65 191.69 83.65 209.9 125.65 201.52 125.65 196.24 114.2 182.79 114.2 185.46 107.44 194.18 107.44 187.31 91.67 173.47 125.65 165.48 125.65" fill="#c99e67"/><polygon points="224.6 83.65 224.6 118.9 244.22 118.9 244.22 125.65 216.82 125.65 216.82 83.65 224.6 83.65" fill="#c99e67"/><polygon points="258.13 83.65 258.13 118.9 277.75 118.9 277.75 125.65 250.35 125.65 250.35 83.65 258.13 83.65" fill="#c99e67"/><path d="m291.68,125.65h-7.78v-42h7.78v42Zm27.79-42l-18.51,19.59,20.97,22.41h-10.78l-17.12-19.62v-5.05l15.92-17.33h9.52Z" fill="#c99e67"/><path d="m328.28,125.59v-41.94h19.09c8.58,0,12.87,3.75,12.87,11.25,0,5.07-3.34,9.27-10.02,12.6l13.31,18.15h-10.1l-12.78-18.3v-3.55c7.64-1.27,11.45-4.16,11.45-8.67,0-3.1-1.74-4.64-5.23-4.64h-10.66v35.1s-7.93,0-7.93,0Z" fill="#c99e67"/><polygon points="367.78 125.65 385.61 83.65 393.98 83.65 412.19 125.65 403.82 125.65 398.53 114.2 385.08 114.2 387.75 107.44 396.48 107.44 389.6 91.67 375.77 125.65 367.78 125.65" fill="#c99e67"/><polygon points="445.7 83.65 445.7 90.35 425.84 90.35 425.84 100.92 444.7 100.92 444.7 107.88 425.75 107.88 425.75 125.65 418.12 125.65 418.12 83.65 445.7 83.65" fill="#c99e67"/><polygon points="484.32 83.65 484.32 90.4 472.27 90.4 472.27 125.65 464.49 125.65 464.49 90.4 452.45 90.4 452.45 83.65 484.32 83.65" fill="#c99e67"/><polygon points="310.66 70.1 356.91 33.47 293.74 66.85 332.59 19.28 280.59 60.63 304.57 8.71 265.86 56.34 273.99 2.19 250.17 54.15 242.12 0 234.15 54.16 210.25 2.22 218.46 56.35 179.68 8.76 203.75 60.66 151.67 19.35 190.6 66.89 127.37 33.56 173.71 70.17 115.78 50.8 156.11 71.98 176 71.98 179.13 71.98 305.06 71.98 308.29 71.98 328.11 71.98 368.54 50.7 310.66 70.1" fill="#c99e67"/><path d="m242.16,168.52c-53.13,0-99.71-17.33-125.79-35.83,19.79,24.1,68.65,41.14,125.79,41.14s106-17.05,125.79-41.14c-26.08,18.5-72.66,35.83-125.79,35.83" fill="#c99e67"/><path d="m242.16,189.53c-36.8,0-69.06-12.01-87.12-24.81,13.71,16.69,47.55,28.49,87.12,28.49s73.42-11.81,87.12-28.49c-18.06,12.81-50.32,24.81-87.12,24.81" fill="#c99e67"/><path d="m491.78,86.69c0-5,2.52-7.51,7.56-7.51s7.61,2.5,7.61,7.51-2.54,7.29-7.61,7.29-7.42-2.43-7.56-7.29Zm7.56,6.31c4.22,0,6.33-2.12,6.33-6.35s-2.11-6.49-6.33-6.49-6.28,2.16-6.28,6.49,2.09,6.35,6.28,6.35Zm-3.09-1.62v-9.42h4.03c1.79,0,2.69.75,2.69,2.25,0,1.23-.88,2.14-2.64,2.72l3.23,4.45h-1.6l-3.01-4.24v-.79c1.8-.29,2.71-.99,2.71-2.09,0-.87-.5-1.3-1.51-1.3h-2.69v8.42h-1.21,0Z" fill="#c99e67"/></svg>`;
+let logoDataUrl = null;
+(function() {
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas');
+    c.width = 1014; c.height = 386;
+    c.getContext('2d').drawImage(img, 0, 0, 1014, 386);
+    logoDataUrl = c.toDataURL('image/png');
+  };
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(LOGO_SVG);
+})();
+
 // ─── IBAN Formatter ───────────────────────────────────────────────────────────
 document.getElementById('iban').addEventListener('input', function() {
   let v = this.value.replace(/\s+/g, '').toUpperCase();
@@ -365,21 +379,24 @@ function buildPDF(data, sigDataUrl) {
 
   // Header bar (KK Green)
   doc.setFillColor(91, 117, 57);
-  doc.rect(0, 0, W, 28, 'F');
+  doc.rect(0, 0, W, 30, 'F');
   // Gold accent stripe
   doc.setFillColor(201, 158, 103);
-  doc.rect(0, 26, W, 2, 'F');
+  doc.rect(0, 28, W, 2, 'F');
+  // Logo (right side, gold on green – ratio 506.95/193.21 ≈ 2.626)
+  if (logoDataUrl) {
+    try { doc.addImage(logoDataUrl, 'PNG', 128, 3, 60, 22.8); } catch(e) {}
+  }
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
-  doc.text('SEPA-Lastschriftmandat', ml, 12);
-  doc.setFontSize(9);
+  doc.setFontSize(15);
+  doc.text('SEPA-Lastschriftmandat', ml, 13);
+  doc.setFontSize(8.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(220, 235, 200);
-  doc.text('Kristallkraft GmbH & Co. KG  •  kristallkraft.com', ml, 20);
-  doc.text('Datum: ' + new Date().toLocaleDateString('de-DE'), mr, 20, { align: 'right' });
+  doc.text('Datum: ' + new Date().toLocaleDateString('de-DE'), ml, 23);
 
-  let y = 36;
+  let y = 38;
   doc.setTextColor(30, 30, 30);
 
   function sectionTitle(txt) {
@@ -474,9 +491,15 @@ function buildPDF(data, sigDataUrl) {
   // Footer (KK Green)
   doc.setFillColor(91, 117, 57);
   doc.rect(0, 282, W, 15, 'F');
-  doc.setTextColor(220, 235, 200);
-  doc.setFontSize(7.5);
-  doc.text('Kristallkraft GmbH & Co. KG  •  kristallkraft.com', W / 2, 290, { align: 'center' });
+  doc.setFillColor(201, 158, 103);
+  doc.rect(0, 282, W, 1.5, 'F');
+  if (logoDataUrl) {
+    try { doc.addImage(logoDataUrl, 'PNG', W/2 - 16, 284, 32, 12.2); } catch(e) {}
+  } else {
+    doc.setTextColor(220, 235, 200);
+    doc.setFontSize(7.5);
+    doc.text('Kristallkraft GmbH & Co. KG  •  kristallkraft.com', W / 2, 291, { align: 'center' });
+  }
 
   return doc;
 }
