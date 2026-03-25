@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lohn → SEPA Converter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f766e;
+            --primary-light: #14b8a6;
+            --primary-dark: #0d5d56;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Für iframe-Einbettung: Höhe an Parent melden */
+        html {
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            box-sizing: border-box;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 1.75rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+            border: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-title::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        input, select {
+            padding: 0.7rem 0.9rem;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: all 0.2s;
+            background: var(--card);
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+        }
+
+        input::placeholder {
+            color: #94a3b8;
+        }
+
+        .dropzone {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+
+        .dropzone:hover, .dropzone.dragover {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, #f0fdfa 0%, #e6fffa 100%);
+        }
+
+        .dropzone-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+
+        .dropzone-text {
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+        }
+
+        .dropzone-hint {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-selected {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f0fdfa;
+            border-radius: 10px;
+            border: 1px solid #99f6e4;
+        }
+
+        .file-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .file-size {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .file-remove {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.5rem;
+            padding: 0.25rem;
+            transition: color 0.2s;
+        }
+
+        .file-remove:hover {
+            color: var(--error);
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            table-layout: auto;
+        }
+
+        .preview-table th {
+            text-align: left;
+            padding: 0.75rem 0.75rem;
+            background: #f8fafc;
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .preview-table td {
+            padding: 0.75rem 0.75rem;
+            border-bottom: 1px solid var(--border);
+            word-break: break-word;
+        }
+
+        .preview-table td:nth-child(2) {
+            font-family: monospace;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+
+        .preview-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .preview-table .amount {
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            text-align: right;
+        }
+
+        .preview-table tfoot td {
+            background: #f0fdfa;
+            font-weight: 700;
+            border-top: 2px solid var(--primary-light);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .summary-label {
+            color: var(--text-muted);
+        }
+
+        .summary-value {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .summary-value.large {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.9rem 1.75rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(15, 118, 110, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(15, 118, 110, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: var(--card);
+            color: var(--text);
+            border: 1.5px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: #f8fafc;
+            border-color: var(--text-muted);
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .alert-warning {
+            background: #fffbeb;
+            border: 1px solid #fcd34d;
+            color: #92400e;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+        }
+
+        .alert-icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .card {
+                padding: 1.25rem;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .dropzone {
+                padding: 2rem 1rem;
+            }
+            
+            .preview-table {
+                font-size: 0.8rem;
+            }
+            
+            .preview-table th, .preview-table td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">€</div>
+                <h1>Lohn → SEPA Converter</h1>
+            </div>
+            <p class="subtitle">XLSX-Lohnexport zu SEPA XML (pain.001.003.03) für Proficash</p>
+        </header>
+
+        <div class="card">
+            <div class="card-title">Auftraggeber (Firmenkonto)</div>
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label for="companyName">Firmenname</label>
+                    <input type="text" id="companyName" value="Kristallkraft" placeholder="z.B. Kristallkraft GmbH">
+                </div>
+                <div class="form-group">
+                    <label for="companyIban">IBAN</label>
+                    <input type="text" id="companyIban" value="DE61258634891702660100" placeholder="DE00 0000 0000 0000 0000 00">
+                </div>
+                <div class="form-group">
+                    <label for="companyBic">BIC</label>
+                    <input type="text" id="companyBic" value="GENODEF1WOT" placeholder="DEUTDEDB000">
+                </div>
+                <div class="form-group">
+                    <label for="verwendungszweck">Verwendungszweck-Präfix</label>
+                    <input type="text" id="verwendungszweck" value="Lohn/Gehalt" placeholder="Lohn/Gehalt">
+                </div>
+                <div class="form-group">
+                    <label for="executionDate">Ausführungsdatum</label>
+                    <input type="date" id="executionDate">
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Excel-Datei hochladen</div>
+            <div id="dropzone" class="dropzone">
+                <div class="dropzone-icon">📄</div>
+                <div class="dropzone-text">Excel-Datei hier ablegen oder klicken</div>
+                <div class="dropzone-hint">Unterstützt .xlsx und .xls</div>
+                <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls">
+            </div>
+            <div id="fileSelected" class="file-selected hidden">
+                <div class="file-icon">📊</div>
+                <div class="file-info">
+                    <div id="fileName" class="file-name"></div>
+                    <div id="fileSize" class="file-size"></div>
+                </div>
+                <button id="fileRemove" class="file-remove" title="Entfernen">×</button>
+            </div>
+        </div>
+
+        <div id="errorCard" class="alert alert-error hidden">
+            <span class="alert-icon">⚠️</span>
+            <div id="errorMessage"></div>
+        </div>
+
+        <div id="missingFieldsCard" class="alert alert-warning hidden">
+            <span class="alert-icon">⚠️</span>
+            <div>
+                <strong>Fehlende Daten gefunden:</strong>
+                <ul id="missingFieldsList" style="margin: 0.5rem 0 0 1rem; padding: 0;"></ul>
+            </div>
+        </div>
+
+        <div id="previewCard" class="card hidden fade-in">
+            <div class="card-title">Vorschau der Überweisungen</div>
+            <div style="overflow-x: auto; max-width: 100%;">
+                <table class="preview-table">
+                    <thead>
+                        <tr>
+                            <th>Empfänger</th>
+                            <th>IBAN</th>
+                            <th>Monat</th>
+                            <th style="text-align: right;">Betrag</th>
+                        </tr>
+                    </thead>
+                    <tbody id="previewBody"></tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3"><strong>Gesamtsumme</strong></td>
+                            <td id="totalAmount" class="amount"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <div id="summaryCard" class="card hidden fade-in">
+            <div class="card-title">Zusammenfassung</div>
+            <div class="summary-row">
+                <span class="summary-label">Anzahl Überweisungen</span>
+                <span id="txCount" class="summary-value"></span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Gesamtbetrag</span>
+                <span id="txTotal" class="summary-value large"></span>
+            </div>
+        </div>
+
+        <div id="warningCard" class="alert alert-warning hidden">
+            <span class="alert-icon">💡</span>
+            <div>Bitte überprüfe die Firmendaten (IBAN, BIC) oben bevor du die XML-Datei generierst.</div>
+        </div>
+
+        <div id="actionsCard" class="actions hidden fade-in">
+            <button id="generateBtn" class="btn btn-primary">
+                <span>📥</span> SEPA XML herunterladen
+            </button>
+            <button id="resetBtn" class="btn btn-secondary">
+                <span>🔄</span> Zurücksetzen
+            </button>
+        </div>
+
+        <footer>
+            Alle Daten werden lokal im Browser verarbeitet – nichts wird hochgeladen.
+        </footer>
+    </div>
+
+    <script>
+        // State
+        let parsedData = null;
+        let fileName = '';
+
+        // DOM Elements
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const fileSelected = document.getElementById('fileSelected');
+        const fileNameEl = document.getElementById('fileName');
+        const fileSizeEl = document.getElementById('fileSize');
+        const fileRemove = document.getElementById('fileRemove');
+        const previewCard = document.getElementById('previewCard');
+        const previewBody = document.getElementById('previewBody');
+        const totalAmount = document.getElementById('totalAmount');
+        const summaryCard = document.getElementById('summaryCard');
+        const txCount = document.getElementById('txCount');
+        const txTotal = document.getElementById('txTotal');
+        const warningCard = document.getElementById('warningCard');
+        const actionsCard = document.getElementById('actionsCard');
+        const generateBtn = document.getElementById('generateBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const errorCard = document.getElementById('errorCard');
+        const errorMessage = document.getElementById('errorMessage');
+        const missingFieldsCard = document.getElementById('missingFieldsCard');
+        const missingFieldsList = document.getElementById('missingFieldsList');
+
+        // Initialize
+        document.getElementById('executionDate').valueAsDate = new Date();
+        loadSettings();
+
+        // Event Listeners
+        dropzone.addEventListener('click', () => fileInput.click());
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) handleFile(file);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) handleFile(e.target.files[0]);
+        });
+
+        fileRemove.addEventListener('click', resetFile);
+        generateBtn.addEventListener('click', generateXML);
+        resetBtn.addEventListener('click', resetAll);
+
+        // Save settings on change
+        ['companyName', 'companyIban', 'companyBic', 'verwendungszweck'].forEach(id => {
+            document.getElementById(id).addEventListener('change', saveSettings);
+        });
+
+        // Functions
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('sepaConverterSettings') || '{}');
+            if (settings.companyName) document.getElementById('companyName').value = settings.companyName;
+            if (settings.companyIban) document.getElementById('companyIban').value = settings.companyIban;
+            if (settings.companyBic) document.getElementById('companyBic').value = settings.companyBic;
+            if (settings.verwendungszweck) document.getElementById('verwendungszweck').value = settings.verwendungszweck;
+            // Standardwerte bleiben erhalten wenn localStorage leer
+        }
+
+        function saveSettings() {
+            const settings = {
+                companyName: document.getElementById('companyName').value,
+                companyIban: document.getElementById('companyIban').value,
+                companyBic: document.getElementById('companyBic').value,
+                verwendungszweck: document.getElementById('verwendungszweck').value
+            };
+            localStorage.setItem('sepaConverterSettings', JSON.stringify(settings));
+        }
+
+        function formatBytes(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(amount);
+        }
+
+        function cleanIban(iban) {
+            return (iban || '').toString().replace(/\s+/g, '').toUpperCase();
+        }
+
+        function cleanBic(bic) {
+            return (bic || '').toString().replace(/\s+/g, '').toUpperCase();
+        }
+
+        function parseAmount(val) {
+            if (val === null || val === undefined || val === '') return 0;
+            if (typeof val === 'number') return val;
+            return parseFloat(val.toString().replace(',', '.')) || 0;
+        }
+
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            errorCard.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorCard.classList.add('hidden');
+        }
+
+        function checkMissingFields() {
+            const warnings = [];
+            
+            parsedData.forEach((row, idx) => {
+                const name = row['Name, Vorname'] || `Zeile ${idx + 1}`;
+                const missing = [];
+                
+                if (!row['IBAN der Mitarbeiterbankverbindung'] || row['IBAN der Mitarbeiterbankverbindung'].toString().trim() === '') {
+                    missing.push('IBAN');
+                }
+                if (!row['BIC der Mitarbeiterbankverbindung'] || row['BIC der Mitarbeiterbankverbindung'].toString().trim() === '') {
+                    missing.push('BIC');
+                }
+                if (!row['Abrechnungsmonat'] || row['Abrechnungsmonat'].toString().trim() === '') {
+                    missing.push('Abrechnungsmonat');
+                }
+                
+                if (missing.length > 0) {
+                    warnings.push(`<li><strong>${name}</strong>: ${missing.join(', ')} fehlt</li>`);
+                }
+            });
+            
+            if (warnings.length > 0) {
+                missingFieldsList.innerHTML = warnings.join('');
+                missingFieldsCard.classList.remove('hidden');
+            } else {
+                missingFieldsCard.classList.add('hidden');
+            }
+        }
+
+        function hideMissingFields() {
+            missingFieldsCard.classList.add('hidden');
+        }
+
+        function handleFile(file) {
+            hideError();
+            fileName = file.name;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const json = XLSX.utils.sheet_to_json(sheet);
+
+                    // Check required columns
+                    const required = ['Name, Vorname', 'IBAN der Mitarbeiterbankverbindung', 'Auszahlungsbetrag (Lohnkonto)'];
+                    const cols = Object.keys(json[0] || {});
+                    const missing = required.filter(r => !cols.includes(r));
+                    
+                    if (missing.length > 0) {
+                        showError(`Fehlende Spalten: ${missing.join(', ')}`);
+                        return;
+                    }
+
+                    // Alle Zeilen mit Name behalten
+                    parsedData = json.filter(row => {
+                        const name = row['Name, Vorname'];
+                        return name && name.toString().trim() !== '';
+                    });
+
+                    if (parsedData.length === 0) {
+                        showError('Keine Einträge mit Namen gefunden.');
+                        return;
+                    }
+
+                    // Prüfe auf fehlende Felder
+                    checkMissingFields();
+
+                    // Show file info
+                    const validCount = parsedData.filter(row => {
+                        const amount = parseAmount(row['Auszahlungsbetrag (Lohnkonto)']);
+                        const iban = row['IBAN der Mitarbeiterbankverbindung'];
+                        return amount > 0 && iban && iban.toString().trim() !== '';
+                    }).length;
+                    
+                    dropzone.classList.add('hidden');
+                    fileSelected.classList.remove('hidden');
+                    fileNameEl.textContent = file.name;
+                    fileSizeEl.textContent = `${formatBytes(file.size)} • ${validCount} von ${parsedData.length} Überweisungen gültig`;
+
+                    // Show preview
+                    showPreview();
+                } catch (err) {
+                    showError('Fehler beim Lesen der Datei: ' + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function showPreview() {
+            previewBody.innerHTML = '';
+            let total = 0;
+            let validCount = 0;
+
+            parsedData.forEach(row => {
+                const amount = parseAmount(row['Auszahlungsbetrag (Lohnkonto)']);
+                const iban = row['IBAN der Mitarbeiterbankverbindung'];
+                const isZero = amount === 0;
+                const noIban = !iban || iban.toString().trim() === '';
+                const willSkip = isZero || noIban;
+                
+                if (!willSkip) {
+                    total += amount;
+                    validCount++;
+                }
+                
+                const tr = document.createElement('tr');
+                if (willSkip) {
+                    tr.style.opacity = '0.5';
+                    tr.style.background = '#fef3c7';
+                }
+                
+                let skipReason = '';
+                if (isZero && noIban) {
+                    skipReason = '<span style="color: #b45309; font-size: 0.75rem; display: block;">⚠️ 0 € + keine IBAN – wird übersprungen</span>';
+                } else if (isZero) {
+                    skipReason = '<span style="color: #b45309; font-size: 0.75rem; display: block;">⚠️ 0 € – wird übersprungen</span>';
+                } else if (noIban) {
+                    skipReason = '<span style="color: #b45309; font-size: 0.75rem; display: block;">⚠️ Keine IBAN – wird übersprungen</span>';
+                }
+                
+                tr.innerHTML = `
+                    <td>${row['Name, Vorname'] || '-'}${skipReason}</td>
+                    <td>${iban ? cleanIban(iban) : '<span style="color: #dc2626;">—</span>'}</td>
+                    <td>${row['Abrechnungsmonat'] || '-'}</td>
+                    <td class="amount">${formatCurrency(amount)}</td>
+                `;
+                previewBody.appendChild(tr);
+            });
+
+            totalAmount.textContent = formatCurrency(total);
+            txCount.textContent = `${validCount} von ${parsedData.length}`;
+            txTotal.textContent = formatCurrency(total);
+
+            previewCard.classList.remove('hidden');
+            summaryCard.classList.remove('hidden');
+            warningCard.classList.remove('hidden');
+            actionsCard.classList.remove('hidden');
+        }
+
+        function resetFile() {
+            parsedData = null;
+            fileName = '';
+            fileInput.value = '';
+            dropzone.classList.remove('hidden');
+            fileSelected.classList.add('hidden');
+            previewCard.classList.add('hidden');
+            summaryCard.classList.add('hidden');
+            warningCard.classList.add('hidden');
+            actionsCard.classList.add('hidden');
+            missingFieldsCard.classList.add('hidden');
+            hideError();
+        }
+
+        function resetAll() {
+            resetFile();
+        }
+
+        function generateXML() {
+            if (!parsedData || parsedData.length === 0) return;
+
+            // Nur gültige Einträge (Betrag > 0 und IBAN vorhanden)
+            const validData = parsedData.filter(row => {
+                const amount = parseAmount(row['Auszahlungsbetrag (Lohnkonto)']);
+                const iban = row['IBAN der Mitarbeiterbankverbindung'];
+                return amount > 0 && iban && iban.toString().trim() !== '';
+            });
+
+            if (validData.length === 0) {
+                showError('Keine gültigen Überweisungen zum Exportieren (alle Einträge haben 0 € oder keine IBAN).');
+                return;
+            }
+
+            const companyName = document.getElementById('companyName').value.trim() || 'Unbekannt';
+            const companyIban = cleanIban(document.getElementById('companyIban').value);
+            const companyBic = cleanBic(document.getElementById('companyBic').value);
+            const verwendungszweck = document.getElementById('verwendungszweck').value || 'Lohn/Gehalt';
+            const executionDate = document.getElementById('executionDate').value || new Date().toISOString().split('T')[0];
+
+            if (!companyIban) {
+                showError('Bitte IBAN des Firmenkontos eingeben!');
+                return;
+            }
+
+            const now = new Date();
+            const msgId = `LOHN-${now.toISOString().replace(/[-:T.Z]/g, '').slice(0, 14)}`;
+            const creationTime = now.toISOString().slice(0, 19);
+
+            let totalSum = 0;
+            validData.forEach(row => {
+                totalSum += parseAmount(row['Auszahlungsbetrag (Lohnkonto)']);
+            });
+
+            // Build XML
+            let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.003.03" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <CstmrCdtTrfInitn>
+    <GrpHdr>
+      <MsgId>${msgId}</MsgId>
+      <CreDtTm>${creationTime}</CreDtTm>
+      <NbOfTxs>${validData.length}</NbOfTxs>
+      <CtrlSum>${totalSum.toFixed(2)}</CtrlSum>
+      <InitgPty>
+        <Nm>${escapeXml(companyName.slice(0, 70))}</Nm>
+      </InitgPty>
+    </GrpHdr>
+    <PmtInf>
+      <PmtInfId>${msgId}</PmtInfId>
+      <PmtMtd>TRF</PmtMtd>
+      <BtchBookg>true</BtchBookg>
+      <NbOfTxs>${validData.length}</NbOfTxs>
+      <CtrlSum>${totalSum.toFixed(2)}</CtrlSum>
+      <PmtTpInf>
+        <SvcLvl>
+          <Cd>SEPA</Cd>
+        </SvcLvl>
+      </PmtTpInf>
+      <ReqdExctnDt>${executionDate}</ReqdExctnDt>
+      <Dbtr>
+        <Nm>${escapeXml(companyName.slice(0, 70))}</Nm>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <IBAN>${companyIban}</IBAN>
+        </Id>
+      </DbtrAcct>
+      <DbtrAgt>
+        <FinInstnId>
+          <BIC>${companyBic || 'NOTPROVIDED'}</BIC>
+        </FinInstnId>
+      </DbtrAgt>
+      <ChrgBr>SLEV</ChrgBr>`;
+
+            // Add transactions (nur gültige)
+            validData.forEach((row, idx) => {
+                const empName = (row['Name, Vorname'] || `Mitarbeiter ${idx + 1}`).slice(0, 70);
+                const empIban = cleanIban(row['IBAN der Mitarbeiterbankverbindung']);
+                const empBic = cleanBic(row['BIC der Mitarbeiterbankverbindung']);
+                const amount = parseAmount(row['Auszahlungsbetrag (Lohnkonto)']);
+                const month = row['Abrechnungsmonat'] || '';
+                const empNr = row['Mitarbeiternummer'] || idx + 1;
+                const endToEndId = `MA${empNr}-${now.toISOString().slice(0, 7).replace('-', '')}`.slice(0, 35);
+                const zweck = `${verwendungszweck} ${month}`.trim().slice(0, 140);
+
+                xml += `
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>${endToEndId}</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="EUR">${amount.toFixed(2)}</InstdAmt>
+        </Amt>
+        <CdtrAgt>
+          <FinInstnId>
+            ${empBic ? `<BIC>${empBic}</BIC>` : '<Othr><Id>NOTPROVIDED</Id></Othr>'}
+          </FinInstnId>
+        </CdtrAgt>
+        <Cdtr>
+          <Nm>${escapeXml(empName)}</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>${empIban}</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>${escapeXml(zweck)}</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>`;
+            });
+
+            xml += `
+    </PmtInf>
+  </CstmrCdtTrfInitn>
+</Document>`;
+
+            // Download
+            const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName.replace(/\.(xlsx?|xls)$/i, '') + '_sepa.xml';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function escapeXml(str) {
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+        }
+
+        // Dynamische iframe-Höhe für SharePoint
+        function updateIframeHeight() {
+            const height = document.body.scrollHeight + 50;
+            // Für SharePoint und andere Embeddings
+            if (window.parent !== window) {
+                window.parent.postMessage({ type: 'resize', height: height }, '*');
+            }
+        }
+
+        // Höhe bei Änderungen aktualisieren
+        const resizeObserver = new ResizeObserver(() => updateIframeHeight());
+        resizeObserver.observe(document.body);
+        window.addEventListener('load', updateIframeHeight);
+    </script>
+</body>
+</html>
