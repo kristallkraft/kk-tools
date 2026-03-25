@@ -70,8 +70,10 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => { keys[e.code] = false; });
 
 // ─── Game variables ───────────────────────────────────────────────────────────
-let player, camera, platforms, carrots, enemies, particles, score, carrotCount, distance;
-let bgLayers;
+let player = null, camera = { x: 0, y: 0 };
+let platforms = [], carrots = [], enemies = [], particles = [];
+let score = 0, carrotCount = 0, distance = 0;
+let bgLayers = [];
 
 function initGame() {
   frame = 0;
@@ -100,11 +102,14 @@ function initGame() {
   enemies = [];
   particles = [];
 
+  genX = 0;
+  difficulty = 1;
+
   // Ground
-  platforms.push({ x: -200, y: 420, w: 1200, h: 80, type: 'ground' });
+  platforms.push({ x: -200, y: 420, w: 1400, h: 80, type: 'ground' });
 
   // Generate initial level
-  generateLevel(0, 1200);
+  generateLevel(0, 1600);
 
   // Background layers
   bgLayers = [
@@ -115,15 +120,15 @@ function initGame() {
 }
 
 // ─── Level generation ─────────────────────────────────────────────────────────
-let genX = 1200;
+let genX = 0;
 let difficulty = 1;
 
 function generateLevel(startX, endX) {
   let x = startX + 100;
-  let lastY = 420;
+  let lastY = 380;
 
   while (x < endX) {
-    difficulty = 1 + Math.floor((genX / 2000) * 0.5);
+    difficulty = 1 + Math.floor((x / 3000));
     const d = difficulty;
 
     // Platform width & gap depend on difficulty
@@ -346,6 +351,7 @@ function updateUI() {
   document.getElementById('carrotBox').textContent = `🥕 ${carrotCount}`;
   document.getElementById('highscoreBox').textContent = `Highscore: ${highscore}`;
 
+  if (!player) return;
   const hpBar = document.getElementById('hpBar');
   hpBar.innerHTML = '';
   for (let i = 0; i < player.maxHp; i++) {
@@ -378,7 +384,7 @@ function drawBackground() {
   ctx.fill();
 
   // Clouds (parallax)
-  const cx = camera.x * 0.2;
+  const cx = (camera ? camera.x : 0) * 0.2;
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
   const clouds = [[100, 60, 80], [300, 40, 60], [550, 70, 90], [750, 50, 70], [950, 65, 75], [1150, 45, 55]];
   for (const [bx, by, bw] of clouds) {
@@ -388,7 +394,7 @@ function drawBackground() {
 
   // Background hills
   ctx.fillStyle = 'rgba(100,160,80,0.3)';
-  const hillOff = camera.x * 0.3;
+  const hillOff = (camera ? camera.x : 0) * 0.3;
   ctx.beginPath();
   ctx.moveTo(0, H);
   for (let x = 0; x <= W; x += 40) {
@@ -744,7 +750,7 @@ function gameLoop() {
   for (const c of carrots) drawCarrot(c);
   for (const e of enemies) drawEnemy(e);
   drawParticles();
-  if (state === 'playing') drawHorse(player);
+  if (state === 'playing' && player) drawHorse(player);
   drawHUD();
 
   requestAnimationFrame(gameLoop);
