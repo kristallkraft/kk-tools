@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pferde-Karotten-Spiel 🐴🥕</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: linear-gradient(135deg, #2d5a1b 0%, #4a7c3f 50%, #1a3a0f 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #fff;
+  }
+
+  h1 {
+    font-size: 2.2rem;
+    margin-bottom: 8px;
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.6);
+    letter-spacing: 2px;
+  }
+
+  #scoreboard {
+    display: flex;
+    gap: 40px;
+    margin-bottom: 16px;
+    background: rgba(0,0,0,0.35);
+    padding: 10px 30px;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  }
+
+  #scoreboard span { color: #ffd700; }
+
+  #game-container {
+    position: relative;
+    border: 4px solid rgba(255,255,255,0.3);
+    border-radius: 12px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.5), 0 0 80px rgba(100,200,50,0.15);
+    overflow: hidden;
+    background: #3d7a2b;
+  }
+
+  canvas {
+    display: block;
+    image-rendering: pixelated;
+  }
+
+  #overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    backdrop-filter: blur(4px);
+  }
+
+  #overlay h2 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+  }
+
+  #overlay p {
+    font-size: 1.1rem;
+    opacity: 0.85;
+    margin-bottom: 6px;
+  }
+
+  #overlay .big-score {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #ffd700;
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.6);
+    margin: 10px 0;
+  }
+
+  #overlay .highscore-label {
+    font-size: 1rem;
+    color: #ffd700;
+    margin-bottom: 20px;
+    opacity: 0.9;
+  }
+
+  #start-btn {
+    background: linear-gradient(135deg, #f4a732, #e8861a);
+    color: #1a0a00;
+    border: none;
+    padding: 14px 40px;
+    font-size: 1.3rem;
+    font-weight: bold;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(244,167,50,0.4);
+    transition: transform 0.1s, box-shadow 0.1s;
+    letter-spacing: 1px;
+  }
+
+  #start-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(244,167,50,0.6);
+  }
+
+  #start-btn:active { transform: scale(0.97); }
+
+  #controls {
+    margin-top: 14px;
+    font-size: 0.85rem;
+    opacity: 0.65;
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+
+  .new-record {
+    animation: pulse 0.6s ease-in-out infinite alternate;
+    color: #ffd700 !important;
+  }
+
+  @keyframes pulse {
+    from { transform: scale(1); text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+    to   { transform: scale(1.05); text-shadow: 0 0 25px rgba(255,215,0,0.9); }
+  }
+
+  #speed-indicator {
+    margin-bottom: 12px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 0.9rem;
+    opacity: 0.8;
+  }
+
+  .pip { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.2); }
+  .pip.active { background: #ffd700; }
+</style>
+</head>
+<body>
+
+<h1>🐴 Pferde-Karotten-Rennen 🥕</h1>
+
+<div id="scoreboard">
+  <div>Punkte: <span id="score">0</span></div>
+  <div>Pferde: <span id="horse-count">1</span></div>
+  <div>Highscore: <span id="highscore">0</span></div>
+</div>
+
+<div id="speed-indicator" id="speed-indicator">
+  <span>Tempo:</span>
+  <div class="pip active" id="pip1"></div>
+  <div class="pip" id="pip2"></div>
+  <div class="pip" id="pip3"></div>
+  <div class="pip" id="pip4"></div>
+  <div class="pip" id="pip5"></div>
+</div>
+
+<div id="game-container">
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="overlay">
+    <h2>🐴🥕 Pferderennen!</h2>
+    <p>Friss Karotten und werde zum größten Pferderudel!</p>
+    <br>
+    <p style="font-size:0.9rem;opacity:0.7">Highscore: <span id="overlay-highscore" style="color:#ffd700;font-weight:bold">0</span></p>
+    <br>
+    <button id="start-btn" onclick="startGame()">🐎 Los geht's!</button>
+    <div id="controls">
+      Pfeiltasten oder WASD zum Steuern &nbsp;|&nbsp; Pause: P oder Leertaste
+    </div>
+  </div>
+</div>
+
+<script>
+const CELL = 28;
+const COLS = 22;
+const ROWS = 18;
+const W = COLS * CELL;
+const H = ROWS * CELL;
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = W;
+canvas.height = H;
+
+const scoreEl   = document.getElementById('score');
+const countEl   = document.getElementById('horse-count');
+const highEl    = document.getElementById('highscore');
+const overlayEl = document.getElementById('overlay');
+const overlayHS = document.getElementById('overlay-highscore');
+
+let highscore = parseInt(localStorage.getItem('horseSnakeHS') || '0');
+highEl.textContent = highscore;
+overlayHS.textContent = highscore;
+
+// Game state
+let snake, dir, nextDir, carrot, score, gameLoop, running, paused, newRecord;
+let frameCount = 0;
+
+// Speed levels: score thresholds → interval ms
+const SPEEDS = [
+  { min: 0,  ms: 200 },
+  { min: 5,  ms: 165 },
+  { min: 12, ms: 135 },
+  { min: 22, ms: 110 },
+  { min: 35, ms: 88  },
+];
+
+function getSpeed() {
+  let s = SPEEDS[0];
+  for (const level of SPEEDS) {
+    if (score >= level.min) s = level;
+  }
+  return s;
+}
+
+function updatePips() {
+  const idx = SPEEDS.findIndex(l => score >= l.min);
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById('pip' + i).classList.toggle('active', i <= idx + 1);
+  }
+}
+
+function startGame() {
+  overlayEl.style.display = 'none';
+  snake = [
+    { x: 6, y: 9 },
+    { x: 5, y: 9 },
+    { x: 4, y: 9 },
+  ];
+  dir = { x: 1, y: 0 };
+  nextDir = { x: 1, y: 0 };
+  score = 0;
+  newRecord = false;
+  frameCount = 0;
+  scoreEl.textContent = 0;
+  countEl.textContent = snake.length;
+  placeCarrot();
+  running = true;
+  paused = false;
+  clearInterval(gameLoop);
+  scheduleLoop();
+  draw();
+}
+
+function scheduleLoop() {
+  clearInterval(gameLoop);
+  gameLoop = setInterval(tick, getSpeed().ms);
+}
+
+function placeCarrot() {
+  let pos;
+  do {
+    pos = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
+  } while (snake.some(s => s.x === pos.x && s.y === pos.y));
+  carrot = pos;
+}
+
+function tick() {
+  if (!running || paused) return;
+  frameCount++;
+
+  dir = { ...nextDir };
+  const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+
+  // Wall collision
+  if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) { gameOver(); return; }
+
+  // Self collision
+  if (snake.some(s => s.x === head.x && s.y === head.y)) { gameOver(); return; }
+
+  snake.unshift(head);
+
+  if (head.x === carrot.x && head.y === carrot.y) {
+    score++;
+    scoreEl.textContent = score;
+    countEl.textContent = snake.length;
+    updatePips();
+    scheduleLoop(); // update speed if needed
+    placeCarrot();
+  } else {
+    snake.pop();
+  }
+
+  draw();
+}
+
+// ── Drawing ─────────────────────────────────────────────────────────────────
+
+// Checkerboard grass pattern
+function drawBackground() {
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      ctx.fillStyle = (r + c) % 2 === 0 ? '#4a8c35' : '#3d7a2b';
+      ctx.fillRect(c * CELL, r * CELL, CELL, CELL);
+    }
+  }
+}
+
+function drawCarrot() {
+  const x = carrot.x * CELL;
+  const y = carrot.y * CELL;
+  // Bouncing animation
+  const bounce = Math.sin(frameCount * 0.18) * 2;
+
+  ctx.save();
+  ctx.translate(x + CELL / 2, y + CELL / 2 + bounce);
+
+  // Glow
+  ctx.shadowColor = 'rgba(255,120,30,0.7)';
+  ctx.shadowBlur = 12;
+
+  ctx.font = `${CELL - 4}px serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🥕', 0, 0);
+
+  ctx.restore();
+}
+
+function drawSnake() {
+  for (let i = snake.length - 1; i >= 0; i--) {
+    const seg = snake[i];
+    const x = seg.x * CELL;
+    const y = seg.y * CELL;
+
+    ctx.save();
+    ctx.translate(x + CELL / 2, y + CELL / 2);
+
+    if (i === 0) {
+      // Head: directional horse
+      const angle = Math.atan2(dir.y, dir.x);
+      ctx.rotate(angle);
+
+      // Head glow
+      ctx.shadowColor = 'rgba(255,220,50,0.5)';
+      ctx.shadowBlur = 10;
+
+      ctx.font = `${CELL + 4}px serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🐎', 0, 0);
+    } else {
+      // Body: smaller horses with slight wave animation
+      const wave = Math.sin(frameCount * 0.15 + i * 0.5) * 1.5;
+
+      ctx.font = `${CELL - 6}px serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.globalAlpha = Math.max(0.5, 1 - i * 0.02);
+      ctx.fillText('🐴', 0, wave);
+    }
+
+    ctx.restore();
+  }
+}
+
+function drawPaused() {
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 2rem Segoe UI, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('⏸ PAUSE', W / 2, H / 2);
+  ctx.font = '1rem Segoe UI, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.fillText('P oder Leertaste zum Weiterspielen', W / 2, H / 2 + 40);
+}
+
+function draw() {
+  drawBackground();
+  if (!running) return;
+  drawCarrot();
+  drawSnake();
+  if (paused) drawPaused();
+}
+
+// ── Game Over ────────────────────────────────────────────────────────────────
+
+function gameOver() {
+  running = false;
+  clearInterval(gameLoop);
+
+  if (score > highscore) {
+    highscore = score;
+    localStorage.setItem('horseSnakeHS', highscore);
+    highEl.textContent = highscore;
+    newRecord = true;
+  }
+
+  overlayEl.innerHTML = buildGameOverHTML();
+  overlayEl.style.display = 'flex';
+  overlayHS.textContent = highscore;
+}
+
+function buildGameOverHTML() {
+  const recordLine = newRecord
+    ? `<div class="highscore-label new-record">🏆 Neuer Highscore! 🏆</div>`
+    : `<div class="highscore-label">Highscore: ${highscore}</div>`;
+
+  return `
+    <h2>💨 Gestolpert!</h2>
+    <p>Das Pferderudel hat ${snake.length} Pferde erreicht.</p>
+    <div class="big-score">${score} 🥕</div>
+    ${recordLine}
+    <button id="start-btn" onclick="startGame()">🐎 Nochmal!</button>
+    <div id="controls">
+      Pfeiltasten oder WASD &nbsp;|&nbsp; Pause: P oder Leertaste
+    </div>
+  `;
+}
+
+// ── Input ────────────────────────────────────────────────────────────────────
+
+const KEY_MAP = {
+  ArrowUp:    { x: 0, y: -1 }, w: { x: 0, y: -1 }, W: { x: 0, y: -1 },
+  ArrowDown:  { x: 0, y:  1 }, s: { x: 0, y:  1 }, S: { x: 0, y:  1 },
+  ArrowLeft:  { x: -1, y: 0 }, a: { x: -1, y: 0 }, A: { x: -1, y: 0 },
+  ArrowRight: { x: 1, y:  0 }, d: { x: 1, y:  0 }, D: { x: 1, y:  0 },
+};
+
+document.addEventListener('keydown', e => {
+  if ((e.key === 'p' || e.key === 'P' || e.key === ' ') && running) {
+    e.preventDefault();
+    paused = !paused;
+    if (!paused) draw();
+    else drawPaused();
+    return;
+  }
+
+  const d = KEY_MAP[e.key];
+  if (!d) return;
+  e.preventDefault();
+
+  // Prevent reversing
+  if (d.x !== 0 && d.x === -dir.x) return;
+  if (d.y !== 0 && d.y === -dir.y) return;
+
+  nextDir = d;
+
+  if (!running) startGame();
+});
+
+// Mobile swipe support
+let touchStart = null;
+canvas.addEventListener('touchstart', e => {
+  touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+}, { passive: true });
+canvas.addEventListener('touchend', e => {
+  if (!touchStart) return;
+  const dx = e.changedTouches[0].clientX - touchStart.x;
+  const dy = e.changedTouches[0].clientY - touchStart.y;
+  touchStart = null;
+  if (Math.abs(dx) < 20 && Math.abs(dy) < 20) return;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    const d = dx > 0 ? { x: 1, y: 0 } : { x: -1, y: 0 };
+    if (d.x !== -dir.x) nextDir = d;
+  } else {
+    const d = dy > 0 ? { x: 0, y: 1 } : { x: 0, y: -1 };
+    if (d.y !== -dir.y) nextDir = d;
+  }
+}, { passive: true });
+
+// Animation loop for carrot bounce (even when not ticking)
+function animFrame() {
+  if (running && !paused) {
+    frameCount += 0.3;
+    drawBackground();
+    drawCarrot();
+    drawSnake();
+  }
+  requestAnimationFrame(animFrame);
+}
+animFrame();
+
+// Initial draw
+drawBackground();
+</script>
+</body>
+</html>
