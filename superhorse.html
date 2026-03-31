@@ -3,28 +3,58 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SuperHorse</title>
+<title>SuperHorse – Kristallkraft</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --waldmoos: #27543e; --hofrot: #b34467; --birkenweiss: #fffbf1;
+    --lehmsand: #c5bda0; --torferde: #1a160f;
+    --serif: 'Lora', Georgia, serif; --sans: 'DM Sans', system-ui, sans-serif;
+  }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #1a0a2e; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: 'Courier New', monospace; overflow: hidden; }
+
+  /* KK Header */
+  .kk-header { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: var(--waldmoos); padding: 10px 24px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+  .kk-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .kk-logo-svg {
+  display: inline-block;
+  height: 40px;
+  width: 360px;
+  flex-shrink: 0;
+  background: url('https://cdn.shopify.com/s/files/1/0810/9991/5566/files/kk_logo_wide_white.svg') no-repeat;
+  background-size: auto 340px;
+  background-position: -71px -154px;
+}
+  .kk-wordmark { font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: var(--birkenweiss); }
+  .kk-page-title { font-family: var(--serif); font-size: 0.9rem; font-weight: 400; color: rgba(255,251,241,0.7); margin-left: auto; }
+
+  body { background: #1a0a2e; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: 'Courier New', monospace; overflow: hidden; padding-top: 52px; }
   #gameContainer { position: relative; }
-  canvas { display: block; border: 3px solid #8B4513; border-radius: 4px; box-shadow: 0 0 40px rgba(139,69,19,0.5); }
+  canvas { display: block; border: 3px solid var(--waldmoos); border-radius: 4px; box-shadow: 0 0 40px rgba(39,84,62,0.4); }
   #ui { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; pointer-events: none; }
-  .ui-box { background: rgba(0,0,0,0.6); border: 2px solid #8B4513; border-radius: 6px; padding: 4px 10px; color: #FFD700; font-size: 14px; font-weight: bold; }
+  .ui-box { background: rgba(39,84,62,0.75); border: 2px solid var(--waldmoos); border-radius: 6px; padding: 4px 10px; color: var(--birkenweiss); font-size: 14px; font-weight: bold; }
   #hpBar { position: absolute; top: 44px; left: 10px; display: flex; gap: 4px; pointer-events: none; }
   .heart { font-size: 18px; }
   #overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); border-radius: 2px; }
-  #overlay h1 { color: #FFD700; font-size: 48px; text-shadow: 3px 3px 0 #8B4513; margin-bottom: 10px; }
-  #overlay h2 { color: #ff6b6b; font-size: 32px; margin-bottom: 8px; }
-  #overlay p { color: #fff; font-size: 16px; margin: 4px 0; }
-  #overlay .score-display { color: #FFD700; font-size: 24px; margin: 16px 0 8px; }
-  #overlay .highscore-display { color: #FFA500; font-size: 18px; margin-bottom: 20px; }
-  #startBtn { background: #8B4513; color: #FFD700; border: 3px solid #FFD700; padding: 12px 32px; font-size: 20px; font-family: 'Courier New', monospace; font-weight: bold; cursor: pointer; border-radius: 6px; transition: all 0.2s; }
-  #startBtn:hover { background: #FFD700; color: #8B4513; }
+  #overlay h1 { color: var(--birkenweiss); font-family: var(--serif); font-size: 48px; text-shadow: 3px 3px 0 var(--waldmoos); margin-bottom: 10px; }
+  #overlay h2 { color: var(--hofrot); font-family: var(--sans); font-size: 32px; margin-bottom: 8px; }
+  #overlay p { color: #fff; font-family: var(--sans); font-size: 16px; margin: 4px 0; }
+  #overlay .score-display { color: var(--birkenweiss); font-size: 24px; margin: 16px 0 8px; }
+  #overlay .highscore-display { color: var(--lehmsand); font-size: 18px; margin-bottom: 20px; }
+  #startBtn { background: var(--waldmoos); color: var(--birkenweiss); border: 3px solid var(--birkenweiss); padding: 12px 32px; font-size: 20px; font-family: var(--sans); font-weight: bold; cursor: pointer; border-radius: 6px; transition: all 0.2s; }
+  #startBtn:hover { background: var(--birkenweiss); color: var(--waldmoos); }
   #controls { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.4); font-size: 11px; pointer-events: none; }
 </style>
 </head>
 <body>
+
+  <header class="kk-header">
+    <a class="kk-brand" href="#">
+      <span class="kk-logo-svg" role="img" aria-label="Kristallkraft Logo"></span>
+    </a>
+    <span class="kk-page-title">SuperHorse</span>
+  </header>
+
 <div id="gameContainer">
   <canvas id="gameCanvas" width="800" height="500"></canvas>
   <div id="ui">

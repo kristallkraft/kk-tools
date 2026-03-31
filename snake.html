@@ -3,26 +3,50 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pferde-Karotten-Spiel 🐴🥕</title>
+<title>Pferde-Karotten-Spiel – Kristallkraft</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --waldmoos: #27543e; --hofrot: #b34467; --birkenweiss: #fffbf1;
+    --lehmsand: #c5bda0; --torferde: #1a160f;
+    --serif: 'Lora', Georgia, serif; --sans: 'DM Sans', system-ui, sans-serif;
+  }
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
+  /* KK Header */
+  .kk-header { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: var(--waldmoos); padding: 10px 24px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+  .kk-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .kk-logo-svg {
+  display: inline-block;
+  height: 40px;
+  width: 360px;
+  flex-shrink: 0;
+  background: url('https://cdn.shopify.com/s/files/1/0810/9991/5566/files/kk_logo_wide_white.svg') no-repeat;
+  background-size: auto 340px;
+  background-position: -71px -154px;
+}
+  .kk-wordmark { font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: var(--birkenweiss); }
+  .kk-page-title { font-family: var(--serif); font-size: 0.9rem; font-weight: 400; color: rgba(255,251,241,0.7); margin-left: auto; }
+
   body {
-    background: linear-gradient(135deg, #2d5a1b 0%, #4a7c3f 50%, #1a3a0f 100%);
+    background: linear-gradient(160deg, #1e3d2b 0%, #27543e 50%, #152a1f 100%);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: var(--sans);
     color: #fff;
+    padding-top: 52px;
   }
 
   h1 {
+    font-family: var(--serif);
     font-size: 2.2rem;
     margin-bottom: 8px;
     text-shadow: 2px 2px 8px rgba(0,0,0,0.6);
-    letter-spacing: 2px;
+    letter-spacing: 1px;
+    color: var(--birkenweiss);
   }
 
   #scoreboard {
@@ -37,7 +61,7 @@
     box-shadow: 0 4px 15px rgba(0,0,0,0.3);
   }
 
-  #scoreboard span { color: #ffd700; }
+  #scoreboard span { color: var(--lehmsand); }
 
   #game-container {
     position: relative;
@@ -78,37 +102,41 @@
   }
 
   #overlay .big-score {
+    font-family: var(--serif);
     font-size: 3rem;
     font-weight: bold;
-    color: #ffd700;
+    color: var(--birkenweiss);
     text-shadow: 2px 2px 8px rgba(0,0,0,0.6);
     margin: 10px 0;
   }
 
   #overlay .highscore-label {
     font-size: 1rem;
-    color: #ffd700;
+    color: var(--lehmsand);
     margin-bottom: 20px;
     opacity: 0.9;
   }
 
   #start-btn {
-    background: linear-gradient(135deg, #f4a732, #e8861a);
-    color: #1a0a00;
-    border: none;
+    background: var(--waldmoos);
+    color: var(--birkenweiss);
+    border: 2px solid var(--birkenweiss);
     padding: 14px 40px;
     font-size: 1.3rem;
+    font-family: var(--sans);
     font-weight: bold;
     border-radius: 50px;
     cursor: pointer;
-    box-shadow: 0 6px 20px rgba(244,167,50,0.4);
-    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 6px 20px rgba(39,84,62,0.4);
+    transition: transform 0.1s, box-shadow 0.1s, background 0.15s;
     letter-spacing: 1px;
   }
 
   #start-btn:hover {
     transform: scale(1.05);
-    box-shadow: 0 8px 25px rgba(244,167,50,0.6);
+    background: var(--birkenweiss);
+    color: var(--waldmoos);
+    box-shadow: 0 8px 25px rgba(39,84,62,0.5);
   }
 
   #start-btn:active { transform: scale(0.97); }
@@ -123,12 +151,12 @@
 
   .new-record {
     animation: pulse 0.6s ease-in-out infinite alternate;
-    color: #ffd700 !important;
+    color: var(--lehmsand) !important;
   }
 
   @keyframes pulse {
-    from { transform: scale(1); text-shadow: 0 0 10px rgba(255,215,0,0.5); }
-    to   { transform: scale(1.05); text-shadow: 0 0 25px rgba(255,215,0,0.9); }
+    from { transform: scale(1); text-shadow: 0 0 10px rgba(197,189,160,0.5); }
+    to   { transform: scale(1.05); text-shadow: 0 0 25px rgba(197,189,160,0.9); }
   }
 
   #speed-indicator {
@@ -141,10 +169,17 @@
   }
 
   .pip { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.2); }
-  .pip.active { background: #ffd700; }
+  .pip.active { background: var(--lehmsand); }
 </style>
 </head>
 <body>
+
+  <header class="kk-header">
+    <a class="kk-brand" href="#">
+      <span class="kk-logo-svg" role="img" aria-label="Kristallkraft Logo"></span>
+    </a>
+    <span class="kk-page-title">Pferde-Karotten-Rennen</span>
+  </header>
 
 <h1>🐴 Pferde-Karotten-Rennen 🥕</h1>
 
