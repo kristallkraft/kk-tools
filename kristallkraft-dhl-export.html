@@ -297,8 +297,9 @@
         const jsPDF = window.jspdf.jsPDF;
 
         try {
+        const doc = new jsPDF('p', 'mm', 'a4');
         selectedEntries.forEach((entry, idx) => {
-          const doc = new jsPDF('p', 'mm', 'a4');
+          if (idx > 0) doc.addPage();
           const W = 210, LM = 16, RM = W - 16, CW = RM - LM;
           let y = 14;
           
@@ -457,12 +458,12 @@
           bold(6.5);
           doc.text('034123 Bestätigung über Sachzuwendung / steuerbegünstigte Einrichtung / Verein (2013)', LM, y);
 
-          // Save PDF
-          const fn = 'Spendenbescheinigung_' + (verein || 'Verein').replace(/[^a-zA-Z0-9äöüÄÖÜß]/g, '_') + '_' + new Date().toISOString().slice(0, 10) + '.pdf';
-          doc.save(fn);
         });
 
-        alert(selectedEntries.length + ' Spendenbescheinigung(en) wurden heruntergeladen.');
+        // Save all pages as a single PDF
+        const fn = 'Spendenbescheinigungen_' + new Date().toISOString().slice(0, 10) + '.pdf';
+        doc.save(fn);
+        alert(selectedEntries.length + ' Spendenbescheinigung(en) in einer PDF gespeichert.');
         } catch (err) {
           console.error('Fehler bei PDF-Generierung:', err);
           alert('Fehler bei der PDF-Generierung: ' + err.message);
