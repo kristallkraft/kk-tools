@@ -6,6 +6,7 @@
 <title>Kristallkraft Influencer Gutschrift Generator</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap');
   *{margin:0;padding:0;box-sizing:border-box}
@@ -70,6 +71,35 @@
   .fade-in{animation:fadeIn .4s ease-out}
   @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
   @media(max-width:640px){.form-row{grid-template-columns:1fr}.container{padding:20px 16px}.card{padding:20px}header{padding:16px 20px}}
+
+  /* ── Preview Document Styles ── */
+  .pvdoc{font-family:Arial,Helvetica,sans-serif;font-size:9.5pt;line-height:1.45;color:#1a1a1a}
+  .pvdoc .pv-title{font-size:21pt;font-weight:700;letter-spacing:1px;margin-bottom:4px}
+  .pvdoc .pv-subtitle{font-size:9pt;color:#555;font-style:italic;margin-bottom:10px}
+  .pvdoc hr{border:none;border-top:1px solid #bbb;margin:8px 0}
+  .pvdoc .pv-meta{display:flex;justify-content:space-between;font-size:9.5pt;margin-bottom:4px}
+  .pvdoc .pv-lz{font-size:9.5pt;margin-bottom:8px}
+  .pvdoc .pv-cols{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:12px 0 8px}
+  .pvdoc .pv-col-head{font-size:7.5pt;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+  .pvdoc .pv-col-name{font-weight:700;font-size:10pt;margin-bottom:2px}
+  .pvdoc .pv-col-body{font-size:9pt;line-height:1.6}
+  .pvdoc .pv-note{background:#f0f0f0;border-radius:3px;padding:9px 13px;font-size:8.5pt;color:#444;margin:10px 0;line-height:1.6}
+  .pvdoc table.pvt{width:100%;border-collapse:collapse;margin:10px 0;font-size:9pt}
+  .pvdoc table.pvt thead tr{background:#2a2a2a;color:#fff}
+  .pvdoc table.pvt th{padding:6px 8px;text-align:left;font-size:8.5pt;font-weight:600;white-space:nowrap}
+  .pvdoc table.pvt td{padding:7px 8px;border-bottom:1px solid #eee;vertical-align:top}
+  .pvdoc table.pvt th:nth-child(n+3),.pvdoc table.pvt td:nth-child(n+3){text-align:right}
+  .pvdoc table.pvt th:nth-child(2),.pvdoc table.pvt td:nth-child(2){text-align:left}
+  .pvdoc .pv-totals{width:55%;margin-left:auto;margin-top:10px}
+  .pvdoc .pv-tot-row{display:flex;justify-content:space-between;padding:3px 0;font-size:9.5pt;border-bottom:1px solid #f0f0f0}
+  .pvdoc .pv-tot-total{font-weight:700;font-size:11pt;padding-top:6px;margin-top:4px;border-top:2.5px solid #1a1a1a;border-bottom:none}
+  .pvdoc .pv-section{margin-top:16px}
+  .pvdoc .pv-sec-title{font-size:10pt;font-weight:700;color:#1a3a7a;padding-bottom:5px;border-bottom:1px solid #bbb;margin-bottom:8px}
+  .pvdoc .pv-zahl-grid{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:8.5pt;align-items:baseline}
+  .pvdoc .pv-zahl-label{font-weight:700;color:#333;white-space:nowrap}
+  .pvdoc .pv-hints{font-size:8pt;color:#333;line-height:1.65;padding-left:14px;margin:0}
+  .pvdoc .pv-hints li{margin-bottom:4px}
+  .pvdoc .pv-footer{margin-top:18px;padding-top:7px;border-top:1px solid #bbb;font-size:7.5pt;color:#888;text-align:center;line-height:1.75}
 </style>
 </head>
 <body>
@@ -114,11 +144,9 @@
     <div class="card fade-in">
       <h2><span class="icon">&#x1F4CB;</span> Ausgelesene Rechnungsdaten</h2>
       <div class="info-box">Die Daten wurden aus der Rechnung ausgelesen. Bitte pr&uuml;fen und bei Bedarf korrigieren.</div>
-      <div style="margin-bottom:18px">
-        <div class="form-group">
-          <label>Rechnungsnr. (Original)</label>
-          <input type="text" id="invNumber" readonly style="background:#F5F5F5">
-        </div>
+      <div class="form-group">
+        <label>Rechnungsnr. (Original)</label>
+        <input type="text" id="invNumber" readonly style="background:#F5F5F5">
       </div>
       <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--text-muted)">POSITIONEN</h3>
       <table class="data-table">
@@ -131,13 +159,14 @@
         <div class="summary-row total"><span>Gesamtbetrag (Rechnung)</span><span id="totalAmount"></span></div>
       </div>
       <div class="hint-box" style="margin-top:16px">
-        <strong>Hinweis:</strong> Der Gesamtbetrag der Gutschrift entspricht immer dem Rechnungs-Gesamtbetrag.
-        Bei regul&auml;rer Gutschrift wird mit 19% USt. r&uuml;ckgerechnet, bei Kleinunternehmern ohne USt.
+        <strong>Hinweis:</strong> Der Gesamtbetrag der Gutschrift entspricht dem Rechnungs-Gesamtbetrag.
+        Bei regul&auml;rer Gutschrift wird mit 19&nbsp;% USt. r&uuml;ckgerechnet, bei Kleinunternehmern ohne USt.
       </div>
     </div>
+
     <div class="card fade-in">
-      <h2><span class="icon">&#x1F464;</span> Influencer-Daten (Aussteller)</h2>
-      <div class="form-group"><label>Name</label><input type="text" id="infName" placeholder="Vor- und Nachname des Influencers"></div>
+      <h2><span class="icon">&#x1F464;</span> Influencer-Daten (Leistender)</h2>
+      <div class="form-group"><label>Name</label><input type="text" id="infName" placeholder="Vor- und Nachname"></div>
       <div class="form-group"><label>Stra&szlig;e &amp; Hausnummer</label><input type="text" id="infStreet" placeholder="z.B. Musterstra&szlig;e 12"></div>
       <div class="form-row">
         <div class="form-group"><label>PLZ</label><input type="text" id="infZip" placeholder="z.B. 12345"></div>
@@ -163,14 +192,36 @@
           <input type="text" id="infSteuer" placeholder="z.B. 12/345/67890">
         </div>
       </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>IBAN (optional)</label>
+          <input type="text" id="infIban" placeholder="z.B. DE89 3704 0044 0532 0130 00">
+        </div>
+        <div class="form-group">
+          <label>BIC (optional)</label>
+          <input type="text" id="infBic" placeholder="z.B. COBADEFFXXX">
+        </div>
+      </div>
     </div>
+
     <div class="card fade-in">
       <h2><span class="icon">&#x1F522;</span> Gutschrift-Details</h2>
       <div class="form-row">
-        <div class="form-group"><label>Gutschrift-Nummer</label><input type="text" id="gsNumber" placeholder="z.B. 10"></div>
+        <div class="form-group"><label>Gutschrift-Nummer</label><input type="text" id="gsNumber" placeholder="z.B. GS-2026-0010"></div>
         <div class="form-group"><label>Gutschrift-Datum</label><input type="date" id="gsDate"></div>
       </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Leistungszeitraum</label>
+          <input type="text" id="lzInput" placeholder="z.B. 01.04.2026 &ndash; 24.04.2026">
+        </div>
+        <div class="form-group">
+          <label>Bezeichnung der Leistung</label>
+          <input type="text" id="leistungBez" value="Werbeleistung" placeholder="z.B. Werbeleistung">
+        </div>
+      </div>
     </div>
+
     <div class="btn-row">
       <button class="btn btn-outline" onclick="goToStep(1)">&#x2190; Zur&uuml;ck</button>
       <button class="btn btn-primary" onclick="goToStep(3)">Vorschau &#x2192;</button>
@@ -181,7 +232,7 @@
   <div id="step3" class="hidden">
     <div class="card fade-in">
       <h2><span class="icon">&#x1F441;</span> Vorschau der Gutschrift</h2>
-      <div id="previewContent" style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:32px;font-family:Arial,sans-serif;font-size:14px;line-height:1.6"></div>
+      <div id="previewContent" style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:28px 32px"></div>
     </div>
     <div class="btn-row">
       <button class="btn btn-outline" onclick="goToStep(2)">&#x2190; Bearbeiten</button>
@@ -233,13 +284,11 @@ async function parsePDF(){
   const dateMatch=fullText.match(/Datum:\s*([\d]+\.\s*\w+\s*\d{4})/i);
   invoiceData.invoiceDate=dateMatch?dateMatch[1].trim():'';
 
-  // Parse address
   const ap=/([A-Z\u00C4\u00D6\u00DC\u00E4\u00F6\u00FCa-z\u00DF]+\s+[A-Z\u00C4\u00D6\u00DC\u00E4\u00F6\u00FCa-z\u00DF]+)\s+([A-Z\u00C4\u00D6\u00DC\u00E4\u00F6\u00FCa-z\u00DF]+(?:weg|stra\u00DFe|str|allee|platz|gasse|ring|damm|ufer|feld|berg|hof|burg|dorf|land|wald|see|bach|bruch|br\u00FCcke|eck|garten|graben|grund|haus|heim|heide|horst|kamp|moor|ried|tal|turm|winkel)[a-z\u00E4\u00F6\u00FC\u00DF]*\.?\s*\d+[a-z]?)\s+(\d{5})\s+([A-Z\u00C4\u00D6\u00DC\u00E4\u00F6\u00FCa-z\u00DF]+(?:\s[A-Z\u00C4\u00D6\u00DC\u00E4\u00F6\u00FCa-z\u00DF]+)?)/i;
   const am=fullText.match(ap);
   let cN='',cS='',cZ='',cC='';
   if(am){cN=am[1].trim();cS=am[2].trim();cZ=am[3].trim();cC=am[4].trim()}
 
-  // Parse items
   invoiceData.items=[];
   const ir=/(\d+)\s+(?:Sack|Stk|St\u00FCck|Dose|Dosen|Flasche|Flaschen|Pkg|Paket|Beutel|Tube|Eimer|Kanister|Set|Box|Karton)\s+([\w-]+)\s+([\w\u00C4\u00D6\u00DC\u00E4\u00F6\u00FC\u00DF\s,.\-]+?)\s+(\d+[.,]\d{2})\s+(\d+[.,]\d{2})/g;
   let m;
@@ -263,7 +312,9 @@ async function parsePDF(){
   document.getElementById('infStreet').value=cS;
   document.getElementById('infZip').value=cZ;
   document.getElementById('infCity').value=cC;
-  document.getElementById('gsDate').value=new Date().toISOString().split('T')[0];
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('gsDate').value=today;
+  document.getElementById('lzInput').value=fDateDE(today);
 
   const tbody=document.getElementById('itemsBody');tbody.innerHTML='';
   invoiceData.items.forEach(it=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${it.quantity}</td><td>${it.description}</td><td class="amount">${fDE(it.unitPrice)} \u20ac</td><td class="amount">${fDE(it.totalPrice)} \u20ac</td>`;tbody.appendChild(tr)});
@@ -287,7 +338,7 @@ function goToStep(s){
 }
 
 function fDE(n){return n.toFixed(2).replace('.',',')}
-function fDateDE(ds){if(!ds)return'';const d=new Date(ds);return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})}
+function fDateDE(ds){if(!ds)return'';const d=new Date(ds+'T12:00:00');return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})}
 
 function getAmounts(){
   const g=invoiceData.total;
@@ -297,105 +348,307 @@ function getAmounts(){
   return{netto,ust,gesamt:g};
 }
 
+function calcZahlFrist(isoDate){
+  if(!isoDate)return'';
+  const d=new Date(isoDate+'T12:00:00');
+  d.setDate(d.getDate()+14);
+  return fDateDE(d.toISOString().split('T')[0]);
+}
+
+/* ══════════════════════════════════════════════
+   PREVIEW (HTML)
+══════════════════════════════════════════════ */
 function renderPreview(){
-  const n=document.getElementById('infName').value,st=document.getElementById('infStreet').value,
-    z=document.getElementById('infZip').value,c=document.getElementById('infCity').value,
-    sx=document.getElementById('infSteuer').value,sTyp=document.getElementById('infSteuerTyp').value,
-    sLabel=sTyp==='ustid'?'USt.-IdNr.':'Steuernummer',gn=document.getElementById('gsNumber').value,
-    gd=fDateDE(document.getElementById('gsDate').value),a=getAmounts();
+  const n=document.getElementById('infName').value||'–';
+  const st=document.getElementById('infStreet').value||'';
+  const z=document.getElementById('infZip').value||'';
+  const c=document.getElementById('infCity').value||'';
+  const sx=document.getElementById('infSteuer').value||'';
+  const sTyp=document.getElementById('infSteuerTyp').value;
+  const sLabel=sTyp==='ustid'?'USt.-IdNr.':'Steuernummer';
+  const gn=document.getElementById('gsNumber').value||'–';
+  const gd=fDateDE(document.getElementById('gsDate').value);
+  const lz=document.getElementById('lzInput').value||'';
+  const iban=document.getElementById('infIban').value||'';
+  const bic=document.getElementById('infBic').value||'';
+  const bez=document.getElementById('leistungBez').value||'Werbeleistung';
+  const a=getAmounts();
+  const zahlFrist=calcZahlFrist(document.getElementById('gsDate').value);
 
-  let h=`<div style="text-align:center;margin-bottom:24px"><strong style="font-size:16px">Gutschrift Nr. ${gn} v. ${gd}</strong></div>
-    <div style="margin-bottom:4px"><strong>Aussteller:</strong></div><div>${n}</div><div>${st}</div><div>${z} ${c}</div>`;
-  if(sx)h+=`<div>${sLabel}: ${sx}</div>`;
-  h+=`<br><br><br><div style="margin-bottom:4px"><strong>Empf\u00e4nger:</strong></div>
-    <div>Kristallkraft Naturprodukte GmbH &amp; Co. KG</div><div>Hauptstra\u00dfe 3</div><div>29499 G\u00fclden</div><div>USt-IdNr.: DE296319042</div><br>
-    <div style="margin-bottom:16px">Gem\u00e4\u00df Kooperationsvertrag erfolgt die Rechnungsausstellung im Gutschriftverfahren gem\u00e4\u00df \u00a7 14 UStG</div>
-    <table style="width:100%;border-collapse:collapse;margin-top:16px">
-    <tr style="border-bottom:2px solid #333"><td style="padding:8px 0;font-weight:bold">Bezeichnung</td><td style="padding:8px 0;font-weight:bold;text-align:right">Anzahl</td></tr>
-    <tr><td style="padding:8px 0">Werbeleistung</td><td style="padding:8px 0;text-align:right">1</td></tr>
-    <tr><td style="padding:4px 0;font-size:12px;color:#666" colspan="2">Leistungsdatum entspricht Rechnungsdatum</td></tr>`;
-
+  let h=`<div class="pvdoc">
+  <div class="pv-title">GUTSCHRIFT</div>
+  <div class="pv-subtitle">Self-Billing-Rechnung gem&auml;&szlig; &sect;&nbsp;14 Abs.&nbsp;2 Satz&nbsp;2 UStG</div>
+  <hr>
+  <div class="pv-meta"><span><strong>Gutschrift-Nr.:</strong> ${gn}</span><span><strong>Datum:</strong> ${gd}</span></div>`;
+  if(lz) h+=`<div class="pv-lz"><strong>Leistungszeitraum:</strong> ${lz}</div>`;
+  h+=`<hr>
+  <div class="pv-cols">
+    <div>
+      <div class="pv-col-head">Gutschriftaussteller (Leistungsempf&auml;nger)</div>
+      <div class="pv-col-name">Kristallkraft Naturprodukte GmbH &amp; Co. KG</div>
+      <div class="pv-col-body">Hauptstra&szlig;e 3<br>29499 G&uuml;lden<br>USt-IdNr.: DE296319042</div>
+    </div>
+    <div>
+      <div class="pv-col-head">Gutschriftempf&auml;nger (Leistender)</div>
+      <div class="pv-col-name">${n}</div>
+      <div class="pv-col-body">${st}<br>${z} ${c}${sx?'<br>'+sLabel+': '+sx:''}</div>
+    </div>
+  </div>
+  <div class="pv-note">
+    Diese Gutschrift wird im Rahmen der Kooperationsvereinbarung zwischen Kristallkraft Naturprodukte GmbH &amp; Co. KG
+    und <strong>${n}</strong> durch den Leistungsempf&auml;nger ausgestellt.<br>
+    Der Leistende hat das Recht zum Widerspruch. Ohne fristgerechten Widerspruch gilt diese Gutschrift als anerkannt.
+  </div>
+  <table class="pvt">
+    <thead><tr>
+      <th style="width:7%">Pos.</th>
+      <th>Beschreibung</th>
+      <th style="width:10%">Menge</th>
+      <th style="width:12%">Einheit</th>
+      <th style="width:14%">Einzelpreis</th>
+      <th style="width:14%">Gesamt netto</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>${bez}</td>
+        <td>1,00</td>
+        <td>pauschal</td>
+        <td>${fDE(a.netto)}&nbsp;&euro;</td>
+        <td>${fDE(a.netto)}&nbsp;&euro;</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="pv-totals">
+    <div class="pv-tot-row"><span>Nettobetrag:</span><span>${fDE(a.netto)}&nbsp;&euro;</span></div>`;
   if(isKleinunternehmer){
-    h+=`<tr style="border-top:1px solid #ddd"><td style="padding:8px 0">Zwischensumme</td><td style="padding:8px 0;text-align:right">${fDE(a.gesamt)} \u20ac</td></tr>
-      <tr><td style="padding:4px 0;color:#666">keine USt, da Kleinunternehmen nach \u00a719 UStG</td><td></td></tr>
-      <tr style="border-top:2px solid #333"><td style="padding:8px 0;font-weight:bold">Gesamtbetrag</td><td style="padding:8px 0;text-align:right;font-weight:bold">${fDE(a.gesamt)} \u20ac</td></tr>`;
+    h+=`<div class="pv-tot-row" style="font-size:8pt;color:#888"><span>keine USt. (&sect;19 UStG)</span><span>0,00&nbsp;&euro;</span></div>`;
   }else{
-    h+=`<tr style="border-top:1px solid #ddd"><td style="padding:8px 0">Zwischensumme Entgelt</td><td style="padding:8px 0;text-align:right">${fDE(a.netto)} \u20ac</td></tr>
-      <tr><td style="padding:4px 0">19% USt.</td><td style="padding:4px 0;text-align:right">${fDE(a.ust)} \u20ac</td></tr>
-      <tr style="border-top:2px solid #333"><td style="padding:8px 0;font-weight:bold">Gesamtbetrag</td><td style="padding:8px 0;text-align:right;font-weight:bold">${fDE(a.gesamt)} \u20ac</td></tr>`;
+    h+=`<div class="pv-tot-row"><span>zzgl. 19&nbsp;% USt:</span><span>${fDE(a.ust)}&nbsp;&euro;</span></div>`;
   }
-  h+='</table>';
+  h+=`<div class="pv-tot-row pv-tot-total"><span>Bruttobetrag:</span><span>${fDE(a.gesamt)}&nbsp;&euro;</span></div>
+  </div>
+
+  <div class="pv-section">
+    <div class="pv-sec-title">Zahlungsinformationen</div>
+    <div class="pv-zahl-grid">
+      <span class="pv-zahl-label">Zahlungsziel:</span>
+      <span>14 Tage${zahlFrist?' (bis '+zahlFrist+')':''}</span>
+      <span class="pv-zahl-label">Zahlungsart:</span>
+      <span>${iban?'&Uuml;berweisung':'Verrechnung mit Produktlieferung'}</span>`;
+  if(iban){
+    h+=`<span class="pv-zahl-label">Bankverbindung Leistender:</span>
+      <span>IBAN:&nbsp;${iban}${bic?'&nbsp;&nbsp;|&nbsp;&nbsp;BIC:&nbsp;'+bic:''}</span>`;
+  }
+  h+=`<span class="pv-zahl-label">Verwendungszweck:</span>
+      <span>${gn}</span>
+    </div>
+  </div>
+
+  <div class="pv-section">
+    <div class="pv-sec-title">PFLICHTHINWEISE</div>
+    <ul class="pv-hints">`;
+  if(isKleinunternehmer){
+    h+=`<li>Diese Gutschrift gilt als Rechnung i.&nbsp;S.&nbsp;d. &sect;&nbsp;14 UStG.</li>
+      <li>Der leistende Unternehmer ist Kleinunternehmer nach &sect;&nbsp;19 UStG &ndash; es wird keine Umsatzsteuer berechnet.</li>`;
+  }else{
+    h+=`<li>Diese Gutschrift gilt als Rechnung i.&nbsp;S.&nbsp;d. &sect;&nbsp;14 UStG. Die Steuerschuld entsteht beim leistenden Unternehmer (Gutschriftempf&auml;nger).</li>`;
+  }
+  h+=`<li>Grundlage: Kooperationsvereinbarung zwischen Kristallkraft Naturprodukte GmbH &amp; Co. KG und ${n}.</li>
+      <li>Der Leistende kann dieser Gutschrift innerhalb von 8 Wochen nach Zugang widersprechen (&sect;&nbsp;14 Abs.&nbsp;2 Satz&nbsp;3 UStG).</li>
+      <li>Ohne Widerspruch des Leistenden entfaltet diese Gutschrift volle umsatzsteuerliche Wirkung.</li>
+    </ul>
+  </div>
+
+  <div class="pv-footer">
+    Kristallkraft NP GmbH &amp; Co. KG &nbsp;|&nbsp; Hauptstra&szlig;e 3, 29499 G&uuml;lden &nbsp;|&nbsp;
+    Tel. +49&nbsp;(0)&nbsp;5863&nbsp;9836-090 &nbsp;|&nbsp; info@kristallkraft.com &nbsp;|&nbsp; www.kristallkraft.com<br>
+    IBAN: DE61&nbsp;2586&nbsp;3489&nbsp;1702&nbsp;6601&nbsp;00 &nbsp;|&nbsp; BIC: GENODEF1WOT &nbsp;|&nbsp;
+    USt.-IdNr.: DE&nbsp;296319042 &nbsp;|&nbsp; Amtsgericht L&uuml;neburg HRA&nbsp;202102 &nbsp;|&nbsp; GF: Daniel D&rsquo;Amico
+  </div>
+</div>`;
+
   document.getElementById('previewContent').innerHTML=h;
 }
 
+/* ══════════════════════════════════════════════
+   PDF GENERATION
+══════════════════════════════════════════════ */
 function generatePDF(){
   const{jsPDF}=window.jspdf;
   const doc=new jsPDF({unit:'mm',format:'a4'});
-  const n=document.getElementById('infName').value,st=document.getElementById('infStreet').value,
-    z=document.getElementById('infZip').value,c=document.getElementById('infCity').value,
-    sx=document.getElementById('infSteuer').value,sTyp=document.getElementById('infSteuerTyp').value,
-    sLabel=sTyp==='ustid'?'USt.-IdNr.':'Steuernummer',gn=document.getElementById('gsNumber').value,
-    gd=fDateDE(document.getElementById('gsDate').value),a=getAmounts();
 
-  const L=25,R=185;
-  let y=30;
-  const lh=6;
+  const n=document.getElementById('infName').value||'';
+  const st=document.getElementById('infStreet').value||'';
+  const z=document.getElementById('infZip').value||'';
+  const c=document.getElementById('infCity').value||'';
+  const sx=document.getElementById('infSteuer').value||'';
+  const sTyp=document.getElementById('infSteuerTyp').value;
+  const sLabel=sTyp==='ustid'?'USt.-IdNr.':'Steuernummer';
+  const gn=document.getElementById('gsNumber').value||'';
+  const gd=fDateDE(document.getElementById('gsDate').value);
+  const lz=document.getElementById('lzInput').value||'';
+  const iban=document.getElementById('infIban').value||'';
+  const bic=document.getElementById('infBic').value||'';
+  const bez=document.getElementById('leistungBez').value||'Werbeleistung';
+  const a=getAmounts();
+  const zahlFrist=calcZahlFrist(document.getElementById('gsDate').value);
 
-  doc.setFont('helvetica','bold');doc.setFontSize(13);
-  doc.text('Gutschrift Nr. '+gn+' v. '+gd,105,y,{align:'center'});
-  y+=14;
+  const L=20,R=190,pageW=210,lh=5.5;
+  let y=22;
 
-  doc.setFont('helvetica','normal');doc.setFontSize(10.5);
-  doc.text('Aussteller:',L,y);y+=lh;
-  doc.text(n,L,y);y+=lh;
-  doc.text(st,L,y);y+=lh;
-  doc.text(z+' '+c,L,y);y+=lh;
-  if(sx){doc.text(sLabel+': '+sx,L,y);y+=lh}
+  /* ── HEADER ── */
+  doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(20,20,20);
+  doc.text('GUTSCHRIFT',L,y);y+=8;
 
-  y+=30;
+  doc.setFont('helvetica','italic');doc.setFontSize(9);doc.setTextColor(80,80,80);
+  doc.text('Self-Billing-Rechnung gem\u00e4\u00df \u00a7 14 Abs. 2 Satz 2 UStG',L,y);y+=5;
 
-  doc.text('Empf\u00e4nger:',L,y);y+=lh;
-  doc.text('Kristallkraft Naturprodukte GmbH & Co. KG',L,y);y+=lh;
-  doc.text('Hauptstra\u00dfe 3',L,y);y+=lh;
-  doc.text('29499 G\u00fclden',L,y);y+=lh;
-  doc.text('USt-IdNr.: DE296319042',L,y);y+=lh;
-  y+=12;
+  doc.setDrawColor(170,170,170);doc.setLineWidth(0.4);doc.line(L,y,R,y);y+=7;
 
-  doc.setFontSize(10.5);
-  doc.text('Gem\u00e4\u00df Kooperationsvertrag erfolgt die Rechnungsausstellung im',L,y);y+=lh;
-  doc.text('Gutschriftverfahren gem\u00e4\u00df \u00a7 14 UStG',L,y);
-  y+=14;
+  /* ── META ROW ── */
+  doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(0);
+  doc.text('Gutschrift-Nr.: '+gn,L,y);
+  doc.text('Datum: '+gd,R,y,{align:'right'});y+=lh;
+  if(lz){doc.text('Leistungszeitraum: '+lz,L,y);y+=lh;}
+  y+=2;
+  doc.line(L,y,R,y);y+=8;
 
-  doc.setFont('helvetica','bold');doc.setFontSize(10.5);
-  doc.text('Bezeichnung',L,y);doc.text('Anzahl',R,y,{align:'right'});
-  y+=1;doc.setLineWidth(0.5);doc.line(L,y,R,y);y+=8;
+  /* ── TWO-COLUMN ADDRESSES ── */
+  const colR=107;
+  doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(90,90,90);
+  doc.text('GUTSCHRIFTAUSSTELLER (LEISTUNGSEMPF\u00c4NGER)',L,y);
+  doc.text('GUTSCHRIFTEMPF\u00c4NGER (LEISTENDER)',colR,y);y+=5;
 
-  doc.setFont('helvetica','normal');
-  doc.text('Werbeleistung',L,y);doc.text('1',R,y,{align:'right'});y+=lh;
-  doc.setFontSize(9);doc.setTextColor(100);
-  doc.text('Leistungsdatum entspricht Rechnungsdatum',L,y);y+=10;
-  doc.setTextColor(0);doc.setFontSize(10.5);
+  doc.setTextColor(0);doc.setFont('helvetica','bold');doc.setFontSize(10);
+  doc.text('Kristallkraft Naturprodukte GmbH & Co. KG',L,y);
+  doc.text(n,colR,y);y+=lh;
 
+  doc.setFont('helvetica','normal');doc.setFontSize(9.5);
+  doc.text('Hauptstra\u00dfe 3',L,y);doc.text(st,colR,y);y+=lh;
+  doc.text('29499 G\u00fclden',L,y);doc.text(z+' '+c,colR,y);y+=lh;
+  doc.text('USt-IdNr.: DE296319042',L,y);
+  if(sx)doc.text(sLabel+': '+sx,colR,y);
+  y+=lh+4;
+
+  doc.setDrawColor(170,170,170);doc.setLineWidth(0.3);doc.line(L,y,R,y);y+=6;
+
+  /* ── GRAY NOTE BOX ── */
+  const noteText='Diese Gutschrift wird im Rahmen der Kooperationsvereinbarung zwischen Kristallkraft Naturprodukte GmbH & Co. KG und '
+    +n+' durch den Leistungsempf\u00e4nger ausgestellt. '
+    +'Der Leistende hat das Recht zum Widerspruch. Ohne fristgerechten Widerspruch gilt diese Gutschrift als anerkannt.';
+  doc.setFontSize(8.5);
+  const noteLines=doc.splitTextToSize(noteText,R-L-8);
+  const noteLH=4.5,notePad=5;
+  const noteH=noteLines.length*noteLH+2*notePad;
+  doc.setFillColor(242,242,242);
+  doc.roundedRect(L,y,R-L,noteH,1.5,1.5,'F');
+  doc.setTextColor(60,60,60);
+  noteLines.forEach((line,i)=>doc.text(line,L+4,y+notePad+i*noteLH));
+  doc.setTextColor(0);
+  y+=noteH+4;
+
+  /* ── POSITIONS TABLE ── */
+  doc.autoTable({
+    startY:y,
+    margin:{left:L,right:210-R},
+    theme:'striped',
+    styles:{fontSize:9,cellPadding:3},
+    headStyles:{fillColor:[42,42,42],textColor:[255,255,255],fontStyle:'bold',fontSize:8.5,cellPadding:3.5},
+    alternateRowStyles:{fillColor:[250,250,250]},
+    columnStyles:{
+      0:{cellWidth:11,halign:'center'},
+      1:{cellWidth:'auto',halign:'left'},
+      2:{cellWidth:17,halign:'right'},
+      3:{cellWidth:22,halign:'right'},
+      4:{cellWidth:27,halign:'right'},
+      5:{cellWidth:27,halign:'right'},
+    },
+    head:[['Pos.','Beschreibung','Menge','Einheit','Einzelpreis','Gesamt netto']],
+    body:[['1',bez,'1,00','pauschal',fDE(a.netto)+' \u20ac',fDE(a.netto)+' \u20ac']],
+  });
+
+  y=doc.lastAutoTable.finalY+7;
+
+  /* ── TOTALS ── */
+  const totX=122;
+  doc.setFont('helvetica','normal');doc.setFontSize(9.5);
+  doc.text('Nettobetrag:',totX,y);
+  doc.text(fDE(a.netto)+' \u20ac',R,y,{align:'right'});y+=lh;
   if(isKleinunternehmer){
-    doc.text('Zwischensumme',L,y);doc.text(fDE(a.gesamt)+' \u20ac',R,y,{align:'right'});y+=lh;
-    doc.setFontSize(9);doc.setTextColor(100);
-    doc.text('keine USt, da Kleinunternehmen nach \u00a719 UStG',L,y);y+=8;
-    doc.setTextColor(0);doc.setFontSize(10.5);
-    doc.setLineWidth(0.5);doc.line(L,y,R,y);y+=6;
-    doc.setFont('helvetica','bold');
-    doc.text('Gesamtbetrag',L,y);doc.text(fDE(a.gesamt)+' \u20ac',R,y,{align:'right'});y+=1;doc.line(L,y,R,y);
+    doc.setFontSize(8.5);doc.setTextColor(120,120,120);
+    doc.text('keine USt. (Kleinunternehmer \u00a719 UStG)',totX,y);
+    doc.setTextColor(0);doc.setFontSize(9.5);y+=lh;
   }else{
-    doc.text('Zwischensumme Entgelt',L,y);doc.text(fDE(a.netto)+' \u20ac',R,y,{align:'right'});y+=lh;
-    doc.text('19% USt.',L,y);doc.text(fDE(a.ust)+' \u20ac',R,y,{align:'right'});y+=8;
-    doc.setLineWidth(0.5);doc.line(L,y,R,y);y+=6;
-    doc.setFont('helvetica','bold');
-    doc.text('Gesamtbetrag',L,y);doc.text(fDE(a.gesamt)+' \u20ac',R,y,{align:'right'});y+=1;doc.line(L,y,R,y);
+    doc.text('zzgl. 19 % USt:',totX,y);
+    doc.text(fDE(a.ust)+' \u20ac',R,y,{align:'right'});y+=lh;
   }
+  doc.setDrawColor(30,30,30);doc.setLineWidth(0.5);doc.line(totX,y,R,y);y+=5;
+  doc.setFont('helvetica','bold');doc.setFontSize(11);
+  doc.text('Bruttobetrag:',totX,y);doc.text(fDE(a.gesamt)+' \u20ac',R,y,{align:'right'});
+  y+=1.5;doc.line(totX,y,R,y);y+=10;
 
+  /* ── ZAHLUNGSINFORMATIONEN ── */
+  doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(26,58,122);
+  doc.text('Zahlungsinformationen',L,y);doc.setTextColor(0);y+=4;
+  doc.setDrawColor(170);doc.setLineWidth(0.3);doc.line(L,y,R,y);y+=5;
+
+  doc.setFontSize(8.5);
+  // Row 1
+  doc.setFont('helvetica','bold');doc.text('Zahlungsziel:',L,y);
+  doc.setFont('helvetica','normal');doc.text('14 Tage'+(zahlFrist?' (bis '+zahlFrist+')':''),L+30,y);
+  doc.setFont('helvetica','bold');doc.text('Zahlungsart:',109,y);
+  doc.setFont('helvetica','normal');doc.text(iban?'\u00dcberweisung':'Verrechnung mit Produktlieferung',139,y);y+=lh;
+  // Row 2: bank (conditional)
+  if(iban){
+    doc.setFont('helvetica','bold');doc.text('Bankverbindung Leistender:',L,y);
+    doc.setFont('helvetica','normal');doc.text('IBAN: '+iban+(bic?'   BIC: '+bic:''),L+57,y);y+=lh;
+  }
+  // Row 3: Verwendungszweck
+  doc.setFont('helvetica','bold');doc.text('Verwendungszweck:',L,y);
+  doc.setFont('helvetica','normal');doc.text(gn,L+42,y);y+=10;
+
+  /* ── PFLICHTHINWEISE ── */
+  doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(26,58,122);
+  doc.text('PFLICHTHINWEISE',L,y);doc.setTextColor(0);y+=4;
+  doc.setDrawColor(170);doc.setLineWidth(0.3);doc.line(L,y,R,y);y+=5;
+  doc.setFont('helvetica','normal');doc.setFontSize(8.5);
+
+  const hints=isKleinunternehmer?[
+    'Diese Gutschrift gilt als Rechnung i. S. d. \u00a7 14 UStG.',
+    'Der leistende Unternehmer ist Kleinunternehmer nach \u00a7 19 UStG \u2013 es wird keine Umsatzsteuer berechnet.',
+    'Grundlage: Kooperationsvereinbarung zwischen Kristallkraft Naturprodukte GmbH & Co. KG und '+n+'.',
+    'Der Leistende kann dieser Gutschrift innerhalb von 8 Wochen nach Zugang widersprechen (\u00a7 14 Abs. 2 Satz 3 UStG).',
+    'Ohne Widerspruch des Leistenden entfaltet diese Gutschrift volle umsatzsteuerliche Wirkung.',
+  ]:[
+    'Diese Gutschrift gilt als Rechnung i. S. d. \u00a7 14 UStG. Die Steuerschuld entsteht beim leistenden Unternehmer (Gutschriftempf\u00e4nger).',
+    'Grundlage: Kooperationsvereinbarung zwischen Kristallkraft Naturprodukte GmbH & Co. KG und '+n+'.',
+    'Der Leistende kann dieser Gutschrift innerhalb von 8 Wochen nach Zugang widersprechen (\u00a7 14 Abs. 2 Satz 3 UStG).',
+    'Ohne Widerspruch des Leistenden entfaltet diese Gutschrift volle umsatzsteuerliche Wirkung.',
+  ];
+
+  hints.forEach(hint=>{
+    doc.text('\u2022',L,y);
+    const lines=doc.splitTextToSize(hint,R-L-5);
+    lines.forEach((line,i)=>doc.text(line,L+4,y+i*4.6));
+    y+=lines.length*4.6+2;
+  });
+
+  /* ── FOOTER ── */
+  const footY=278;
+  doc.setDrawColor(180);doc.setLineWidth(0.3);doc.line(L,footY-4,R,footY-4);
+  doc.setFontSize(7.5);doc.setTextColor(130,130,130);
+  doc.text(
+    'Kristallkraft NP GmbH & Co. KG  |  Hauptstra\u00dfe 3, 29499 G\u00fclden  |  Tel. +49 (0) 5863 9836-090  |  info@kristallkraft.com  |  www.kristallkraft.com',
+    pageW/2,footY,{align:'center'});
+  doc.text(
+    'IBAN: DE61 2586 3489 1702 6601 00  |  BIC: GENODEF1WOT  |  USt.-IdNr.: DE 296319042  |  Amtsgericht L\u00fcneburg HRA 202102  |  GF: Daniel D\'Amico',
+    pageW/2,footY+4,{align:'center'});
+
+  /* ── SAVE ── */
   const namePart=n.replace(/\s+/g,'');
   const datePart=gd.replace(/\./g,'');
-  const fn=namePart+'_'+datePart+'_InfluencerMarketing_gutschrift'+gn+'_gepr.so.pdf';
-  doc.save(fn);
+  doc.save(namePart+'_'+datePart+'_InfluencerMarketing_Gutschrift_'+gn+'.pdf');
 }
 </script>
 </body>
