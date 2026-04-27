@@ -336,7 +336,7 @@ function renderPreview(){
   if(bankInst)bankParts.push(bankInst);
   if(bankI)bankParts.push('IBAN: '+bankI);
   if(bankB)bankParts.push('BIC: '+bankB);
-  const bankLine=bankParts.length?'Bankverbindung Leistender: '+bankParts.join(' \u2502 '):'';
+  const bankLine=bankParts.length?'Bankverbindung Leistender: '+bankParts.join(' | '):'';
 
   const h=`<div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.4;color:#1a1a1a">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">
@@ -549,7 +549,7 @@ function generatePDF(){
   if(bankInst)bankParts.push(bankInst);
   if(bankI)bankParts.push('IBAN: '+bankI);
   if(bankB)bankParts.push('BIC: '+bankB);
-  const bankStr=bankParts.length?'Bankverbindung Leistender: '+bankParts.join(' \u2502 '):'';
+  const bankStr=bankParts.length?'Bankverbindung Leistender: '+bankParts.join(' | '):'';
   const bankStrLines=bankStr?doc.splitTextToSize(bankStr,CW-6):[];
   const payBoxH=6+6+6+(hasBankInfo?bankStrLines.length*4.5+2:0)+6+4;
 
@@ -579,8 +579,8 @@ function generatePDF(){
   // \u2500\u2500 FOOTER \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   doc.setDrawColor(185,185,185);doc.setLineWidth(0.3);doc.line(L,278,R,278);
   doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(130,130,130);
-  doc.text('Kristallkraft Naturprodukte GmbH & Co. KG \u2502 Hauptstra\u00dfe 3, 29499 G\u00fclden \u2502 USt-IdNr.: DE296319042',105,282,{align:'center'});
-  doc.text('IBAN: DE61 2586 3489 1702 6601 00 \u2502 BIC: GENODEF1WOT \u2502 VR PLUS Altmark-Wendland',105,286,{align:'center'});
+  doc.text('Kristallkraft Naturprodukte GmbH & Co. KG  |  Hauptstra\u00dfe 3, 29499 G\u00fclden  |  USt-IdNr.: DE296319042',105,282,{align:'center'});
+  doc.text('IBAN: DE61 2586 3489 1702 6601 00  |  BIC: GENODEF1WOT  |  VR PLUS Altmark-Wendland',105,286,{align:'center'});
   doc.text('Seite 1 von 1',R,286,{align:'right'});
 
   doc.save(n.replace(/\s+/g,'_')+'_'+gsNr+'_Gutschrift.pdf');
