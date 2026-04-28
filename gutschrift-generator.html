@@ -395,7 +395,7 @@ function renderPreview(){
     </div>
   </div>
   <div class="pv-note">
-    Diese Gutschrift wird im Rahmen der Kooperationsvereinbarung zwischen Kristallkraft Naturprodukte GmbH &amp; Co. KG
+    Diese Gutschrift wird im Rahmen der Vereinbarung zwischen Kristallkraft Naturprodukte GmbH &amp; Co. KG
     und <strong>${n}</strong> durch den Leistungsempf&auml;nger ausgestellt.<br>
     Der Leistende hat das Recht zum Widerspruch. Ohne fristgerechten Widerspruch gilt diese Gutschrift als anerkannt.
   </div>
@@ -454,7 +454,7 @@ function renderPreview(){
   }else{
     h+=`<li>Diese Gutschrift gilt als Rechnung i.&nbsp;S.&nbsp;d. &sect;&nbsp;14 UStG. Die Steuerschuld entsteht beim leistenden Unternehmer (Gutschriftempf&auml;nger).</li>`;
   }
-  h+=`<li>Grundlage: Kooperationsvereinbarung zwischen Kristallkraft Naturprodukte GmbH &amp; Co. KG und ${n}.</li>
+  h+=`<li>Grundlage: Vereinbarung zwischen Kristallkraft Naturprodukte GmbH &amp; Co. KG und ${n}.</li>
       <li>Der Leistende kann dieser Gutschrift innerhalb von 8 Wochen nach Zugang widersprechen (&sect;&nbsp;14 Abs.&nbsp;2 Satz&nbsp;3 UStG).</li>
       <li>Ohne Widerspruch des Leistenden entfaltet diese Gutschrift volle umsatzsteuerliche Wirkung.</li>
     </ul>
@@ -534,7 +534,7 @@ function generatePDF(){
   doc.setDrawColor(170,170,170);doc.setLineWidth(0.3);doc.line(L,y,R,y);y+=6;
 
   /* ── GRAY NOTE BOX ── */
-  const noteText='Diese Gutschrift wird im Rahmen der Kooperationsvereinbarung zwischen Kristallkraft Naturprodukte GmbH & Co. KG und '
+  const noteText='Diese Gutschrift wird im Rahmen der Vereinbarung zwischen Kristallkraft Naturprodukte GmbH & Co. KG und '
     +n+' durch den Leistungsempf\u00e4nger ausgestellt. '
     +'Der Leistende hat das Recht zum Widerspruch. Ohne fristgerechten Widerspruch gilt diese Gutschrift als anerkannt.';
   doc.setFontSize(8.5);
@@ -617,12 +617,12 @@ function generatePDF(){
   const hints=isKleinunternehmer?[
     'Diese Gutschrift gilt als Rechnung i. S. d. \u00a7 14 UStG.',
     'Der leistende Unternehmer ist Kleinunternehmer nach \u00a7 19 UStG \u2013 es wird keine Umsatzsteuer berechnet.',
-    'Grundlage: Kooperationsvereinbarung zwischen Kristallkraft Naturprodukte GmbH & Co. KG und '+n+'.',
+    'Grundlage: Vereinbarung zwischen Kristallkraft Naturprodukte GmbH & Co. KG und '+n+'.',
     'Der Leistende kann dieser Gutschrift innerhalb von 8 Wochen nach Zugang widersprechen (\u00a7 14 Abs. 2 Satz 3 UStG).',
     'Ohne Widerspruch des Leistenden entfaltet diese Gutschrift volle umsatzsteuerliche Wirkung.',
   ]:[
     'Diese Gutschrift gilt als Rechnung i. S. d. \u00a7 14 UStG. Die Steuerschuld entsteht beim leistenden Unternehmer (Gutschriftempf\u00e4nger).',
-    'Grundlage: Kooperationsvereinbarung zwischen Kristallkraft Naturprodukte GmbH & Co. KG und '+n+'.',
+    'Grundlage: Vereinbarung zwischen Kristallkraft Naturprodukte GmbH & Co. KG und '+n+'.',
     'Der Leistende kann dieser Gutschrift innerhalb von 8 Wochen nach Zugang widersprechen (\u00a7 14 Abs. 2 Satz 3 UStG).',
     'Ohne Widerspruch des Leistenden entfaltet diese Gutschrift volle umsatzsteuerliche Wirkung.',
   ];
