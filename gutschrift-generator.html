@@ -492,7 +492,6 @@ function generatePDF(){
   const bic=document.getElementById('infBic').value||'';
   const bez=document.getElementById('leistungBez').value||'Werbeleistung';
   const a=getAmounts();
-  const zahlFrist=calcZahlFrist(document.getElementById('gsDate').value);
 
   const L=20,R=190,pageW=210,lh=5.5;
   let y=22;
@@ -595,10 +594,8 @@ function generatePDF(){
 
   doc.setFontSize(8.5);
   // Row 1
-  doc.setFont('helvetica','bold');doc.text('Zahlungsziel:',L,y);
-  doc.setFont('helvetica','normal');doc.text('14 Tage'+(zahlFrist?' (bis '+zahlFrist+')':''),L+30,y);
-  doc.setFont('helvetica','bold');doc.text('Zahlungsart:',109,y);
-  doc.setFont('helvetica','normal');doc.text(iban?'\u00dcberweisung':'Verrechnung mit Produktlieferung',139,y);y+=lh;
+  doc.setFont('helvetica','bold');doc.text('Zahlungsart:',L,y);
+  doc.setFont('helvetica','normal');doc.text(iban?'\u00dcberweisung':'Verrechnung mit Produktlieferung',L+30,y);y+=lh;
   // Row 2: bank (conditional)
   if(iban){
     doc.setFont('helvetica','bold');doc.text('Bankverbindung Leistender:',L,y);
