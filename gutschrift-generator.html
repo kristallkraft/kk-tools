@@ -348,12 +348,6 @@ function getAmounts(){
   return{netto,ust,gesamt:g};
 }
 
-function calcZahlFrist(isoDate){
-  if(!isoDate)return'';
-  const d=new Date(isoDate+'T12:00:00');
-  d.setDate(d.getDate()+14);
-  return fDateDE(d.toISOString().split('T')[0]);
-}
 
 /* ══════════════════════════════════════════════
    PREVIEW (HTML)
@@ -373,7 +367,6 @@ function renderPreview(){
   const bic=document.getElementById('infBic').value||'';
   const bez=document.getElementById('leistungBez').value||'Werbeleistung';
   const a=getAmounts();
-  const zahlFrist=calcZahlFrist(document.getElementById('gsDate').value);
 
   let h=`<div class="pvdoc">
   <div class="pv-title">GUTSCHRIFT</div>
@@ -432,8 +425,6 @@ function renderPreview(){
   <div class="pv-section">
     <div class="pv-sec-title">Zahlungsinformationen</div>
     <div class="pv-zahl-grid">
-      <span class="pv-zahl-label">Zahlungsziel:</span>
-      <span>14 Tage${zahlFrist?' (bis '+zahlFrist+')':''}</span>
       <span class="pv-zahl-label">Zahlungsart:</span>
       <span>${iban?'&Uuml;berweisung':'Verrechnung mit Produktlieferung'}</span>`;
   if(iban){
